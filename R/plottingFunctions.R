@@ -1,4 +1,68 @@
+gr_np<-function(object){
 
+  WTH <- object$WTH
+
+  # Time series  --------------------------------------------------------
+  TS_RH <-WTH %>%
+    dplyr::select(date,RH2M) %>%
+    group_by(date) %>%
+    dplyr::summarise(RH=mean(RH2M),
+                     n()) %>%
+    plot_ly(type = 'scatter', mode = 'lines',
+            width = 900,height = 450)%>%
+    add_trace(x = ~date, y = ~RH,name="R.H.")%>%
+    layout(showlegend = F) %>%
+    layout(
+      xaxis = list(zerolinecolor = '#ffff',
+                   zerolinewidth = 2,
+                   gridcolor = 'ffff',title = 'Period between Planting and Harvesting'),
+      yaxis = list(zerolinecolor = '#ffff',
+                   zerolinewidth = 2,
+                   gridcolor = 'ffff',title = 'Realtive Humidity'),
+      plot_bgcolor='#e5ecf6')
+  #TS_RH
+
+  TS_TM <-WTH %>% dplyr::select(date,T2M)%>%
+    group_by(date) %>%
+    dplyr::summarise(TM=mean(T2M),
+                     n()) %>%
+    plot_ly(type = 'scatter', mode = 'lines',
+            width = 900,height = 450)%>%
+    add_trace(x = ~date, y = ~TM,name="°C")%>%
+    layout(showlegend = F) %>%
+    layout(
+      xaxis = list(zerolinecolor = '#ffff',
+                   zerolinewidth = 2,
+                   gridcolor = 'ffff',title = 'Period between Planting and Harvesting'),
+      yaxis = list(zerolinecolor = '#ffff',
+                   zerolinewidth = 2,
+                   gridcolor = 'ffff',title = 'Temperature (°C)'),
+      plot_bgcolor='#e5ecf6')
+
+
+  TS_PPT<-WTH %>% dplyr::select(date,PRECTOTCORR) %>%
+    group_by(date) %>%
+    dplyr::summarise(PPT=mean(PRECTOTCORR),
+                     n()) %>%
+    plot_ly(type = 'scatter', mode = 'lines',
+            width = 900,height = 450)%>%
+    add_trace(x = ~date, y = ~PPT,name="PPT")%>%
+    layout(showlegend = F) %>%
+    layout(
+      xaxis = list(zerolinecolor = '#ffff',
+                   zerolinewidth = 2,
+                   gridcolor = 'ffff',title = 'Period between Planting and Harvesting'),
+      yaxis = list(zerolinecolor = '#ffff',
+                   zerolinewidth = 2,
+                   gridcolor = 'ffff',title = 'Precipitation (mm)'),
+      plot_bgcolor='#e5ecf6')
+  # Outputs -----------------------------------------------------------------
+  output<- list(TS_RH = TS_RH,
+                TS_TM = TS_TM,
+                TS_PPT = TS_PPT)
+  return(output)
+
+}
 plotDensitySelected <-  function(object,environmentPredictionsRadar2, traitFilterPredictionsRadar2, meanGroupPredictionsRadar, proportion=0.2,
                                  analysisId, trait, desirev, scaled){
 
