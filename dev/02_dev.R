@@ -62,6 +62,9 @@ usethis::use_package( "shinymanager" )
 ## Add modules ----
 ## Create a module infrastructure in R/
 # golem::add_module(name = "input_file_sta", with_test = TRUE) # Name of the module
+
+golem::add_module(name = "demotemp")
+
 golem::add_module(name = "getData", with_test = TRUE) # extracting raw data
 
 golem::add_module(name = "qaRawApp", with_test = TRUE) # QA on raw data

@@ -36,6 +36,7 @@ app_ui <- function(request) {
       tabPanel("Home", mod_homeApp_ui("homeApp_1"), icon = icon("house")  ),
 
       tabPanel("Data Retrieval ", mod_getData_ui("getData_1"), icon = icon("upload") ),
+      tabPanel("DEMO",  mod_demotemp_ui("demotemp_1")),
 
       navbarMenu("QA-QC", icon = icon("medal"),
                  tabPanel(strong("QUALITY CONTROL"),  mod_sectionInfoQAApp_ui("sectionInfoQAApp_1"), icon = icon("medal")),
