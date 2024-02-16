@@ -19,7 +19,7 @@ gr_np<-function(object){
       yaxis = list(zerolinecolor = '#ffff',
                    zerolinewidth = 2,
                    gridcolor = 'ffff',title = 'Realtive Humidity'),
-      plot_bgcolor='#e5ecf6')
+      plot_bgcolor='#e5ecf6') #
   #TS_RH
 
   TS_TM <-WTH %>% dplyr::select(date,T2M)%>%
