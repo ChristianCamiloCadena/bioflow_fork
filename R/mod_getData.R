@@ -3,7 +3,7 @@ geno_example  <- 'www/example/geno.hmp.txt'
 ped_example   <- 'www/example/pedigree.csv'
 qtl_example <- 'www/example/qtl.csv'
 
-#' getData UI Function
+#' getData UI Function (test forking)
 #'
 #' @description A shiny Module.
 #'
@@ -71,11 +71,11 @@ mod_getData_ui <- function(id){
                                               p(strong("country.-"),"The name of the column containing the labels listing the countries where a trial was carried out (e.g., Nigeria, Mexico, etc.)."),
                                               p(strong("location-"),"The name of the column containing the labels listing the locations within a country when a trial was carried out (e.g., Obregon, Toluca, etc.)."),
                                               p(strong("trial.-"),"The name of the column containing the labels listing the trial of experiment randomized."),
-                                              p(strong("environment.-"),"The name of the column containing the labels listing the unique occurrences of a trial nested in a year, country, location. If not available, compute it using the button available."),
-                                              p(strong("rep.-"),"The name of the column containing the labels of the replicates or big blocks within an environment (year-season-country-location-trial concatenation)."),
-                                              p(strong("iBlock.-"),"The name of the column containing the labels of the incomplete blocks within an environment."),
-                                              p(strong("row.-"),"The name of the column containing the labels of the row coordinates for each record within an environment."),
-                                              p(strong("column.-"),"The name of the column containing the labels of the column coordinates for each record within an environment."),
+                                              p(strong("study.-"),"The name of the column containing the labels listing the unique occurrences of a trial nested in a year, country, location. If not available, compute it using the button available."),
+                                              p(strong("rep.-"),"The name of the column containing the labels of the replicates or big blocks within an study (year-season-country-location-trial concatenation)."),
+                                              p(strong("iBlock.-"),"The name of the column containing the labels of the incomplete blocks within an study."),
+                                              p(strong("row.-"),"The name of the column containing the labels of the row coordinates for each record within an study."),
+                                              p(strong("column.-"),"The name of the column containing the labels of the column coordinates for each record within an study."),
                                               p(strong("designation.-"),"The name of the column containing the labels of the individuals tested in the environments (e.g., Borlaug123, IRRI-154, Campeon, etc. )."),
                                               p(strong("gid.-"),"The name of the column containing the labels with the unique numerical identifier used within the database management system."),
                                               p(strong("entryType.-"),"The name of the column containing the labels of the genotype category (check, tester, entry, etc.)."),
@@ -136,7 +136,7 @@ mod_getData_ui <- function(id){
                  tags$span(id = ns('data_server_holder'),
                            shinydashboard::box(width = 4, title = span(icon('magnifying-glass-chart'), ' Data Source'), status = 'success', solidHeader = TRUE,
                                                tags$span(id = ns('pheno_db_crop_holder'),
-                                                         selectInput(
+                                                         selectizeInput(
                                                            inputId = ns('pheno_db_crop'),
                                                            label   = 'Crop: ',
                                                            choices = list()
@@ -147,12 +147,8 @@ mod_getData_ui <- function(id){
                                                  label   = 'Breeding Program: ',
                                                  choices = list()
                                                ),
-                                               selectizeInput(
-                                                 inputId = ns('pheno_db_trial'),
-                                                 label   = 'Trial/Study: ',
-                                                 choices = list(),
-                                                 multiple = TRUE
-                                               ),
+                                               uiOutput(ns('pheno_db_folder')),
+                                               uiOutput(ns('pheno_db_trial')),
                                                actionButton(
                                                  inputId = ns('pheno_db_load'),
                                                  label = 'Load',
@@ -162,25 +158,29 @@ mod_getData_ui <- function(id){
                  ),
         ),
 
-        if (!is.null(pheno_example)) {
-          checkboxInput(
-            inputId = ns('pheno_example'),
-            label = span('Load example ',
-                         a('phenotypic data', target = '_blank',
-                           href = pheno_example)),
-            value = FALSE
-          )
-        },
+        shinydashboard::box(width = 12,
+                            if (!is.null(pheno_example)) {
+                              checkboxInput(
+                                inputId = ns('pheno_example'),
+                                label = span('Load example ',
+                                             a('phenotypic data', target = '_blank',
+                                               href = pheno_example)),
+                                value = FALSE
+                              )
+                            },
 
-        p(span("**If you have hybrid-crop data and need to map 'mother' and 'father' information for GCA models please provide that information in the Pedigree tab (you can use the same Phenotype file if those columns are there).", style="color:orange")),
+                            p(span("Note: If you have hybrid-crop data and need to map 'mother' and 'father' information for GCA models please provide that information in the Pedigree tab (you can use the same Phenotype file if those columns are there).", style="color:orange")),
+
+                            hr(),
+                            uiOutput(ns('brapi_trait_map')),
+                            DT::DTOutput(ns('preview_pheno')),
+                            uiOutput(ns('pheno_map')),
+                            actionButton(ns("concatenateEnv"), div(p(strong('Compute Environments', span('(*required)',style="color:red"))), style="display: inline-block; line-height:30px;"), icon = icon("play-circle"), style = "height: 45px"),
+                            p(span("Note: 'Compute environment' will concatenate any info provided in optional columns: 'year', 'season', 'location', 'trial' and 'study' ", style="color:orange")),
+                            textOutput(ns("outConcatenateEnv")),
+        ),
 
 
-        hr(),
-        uiOutput(ns('brapi_trait_map')),
-        DT::DTOutput(ns('preview_pheno')),
-        uiOutput(ns('pheno_map')),
-        actionButton(ns("concatenateEnv"), "Update environments", icon = icon("play-circle")),
-        textOutput(ns("outConcatenateEnv")),
       ),
       tabPanel(
         title = 'Genotypic',
@@ -193,7 +193,9 @@ mod_getData_ui <- function(id){
           selectInput(
             inputId = ns('geno_input'),
             label   = 'Genotypic SNPs Source*:',
-            choices = list('HapMap Upload' = 'file', 'HapMap URL' = 'url', 'Table Upload' = 'matfile', 'Table URL' = 'matfileurl' ),
+            choices = list('HapMap Upload' = 'file', 'HapMap URL' = 'url',
+                           'Table Upload' = 'matfile', 'Table URL' = 'matfileurl',
+                           'VCF Upload' = 'vcf.file', 'VCF URL' = 'vcf.url'),
             width   = '200px'
           ),
           tags$span(id = ns('geno_file_holder'),
@@ -201,7 +203,7 @@ mod_getData_ui <- function(id){
                       inputId = ns('geno_file'),
                       label   = NULL,
                       width   = '400px',
-                      accept  = c('application/gzip', '.gz', '.txt', '.hmp', '.csv')
+                      accept  = c('application/gzip', '.gz', '.txt', '.hmp', '.csv', '.vcf')
                     )
           ),
           textInput(
@@ -263,10 +265,10 @@ mod_getData_ui <- function(id){
               solidHeader = TRUE,
               status = 'success',
               tags$ul(
-                tags$li('Accept HapMap format (tab-delimited text file with a header row).
-                         The file list SNPs in rows and Accessions (individual samples)
-                         in columns. The first 11 columns describe attributes of the SNP,
-                         but only the first 4 columns data are required for processing:
+                tags$li('Accept HapMap, VCF, CSV formats (tab-delimited text file with a header row).
+                         The HapMap and VCF files list SNPs in rows and Accessions (individual samples)
+                         in columns, and viceversa in the case of the CSV. The first 11 columns of the HapMap
+                         describe attributes of the SNP, but only the first 4 columns data are required for processing:
                          rs# (SNP id), alleles (e.g., C/G), chrom (chromosome), and pos (position).'),
 
                 tags$li(
@@ -276,7 +278,7 @@ mod_getData_ui <- function(id){
                     tags$a('IUPAC single-letter', target = '_blank', href = 'https://en.wikipedia.org/wiki/Nucleic_acid_notation#IUPAC_notation'),
                     'code (ref. ',
                     tags$a('https://doi.org/10.1093/nar/13.9.3021', target = '_blank', href = 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC341218/'),
-                    ').'
+                    '),', 'and double-letter code.'
                   )
                 ),
 
@@ -309,7 +311,9 @@ mod_getData_ui <- function(id){
 
           hr(),
           DT::DTOutput(ns('preview_geno')),
-        )
+        ),
+
+
       ),
       tabPanel(
         title = 'Pedigree',
@@ -366,19 +370,60 @@ mod_getData_ui <- function(id){
         },
 
         uiOutput(ns('ped_map')),
+        p(span("**Unknown mothers or fathers should be set as missing data in your file.", style="color:orange")),
+
 
         verbatimTextOutput(ns('ped_summary')),
         hr(),
         DT::DTOutput(ns('preview_ped')),
+
+
       ),
       tabPanel(
         title = 'Weather',
         value = ns('tab4'),
-        tags$p('Comming soon!', style = 'color: red; font-size: 20px; margin-top: 25px;'),
+        tabsetPanel(
+          tabPanel("Specify coordinates", icon = icon("magnifying-glass-chart"),
+                   br(),
+                   uiOutput(ns("warningMessage")),
+                   column(width = 12, style = "background-color:grey; color: #FFFFFF",
+                          column(width = 2, p(strong("Environment")) ),
+                          column(width = 2, p(strong("Latitude")) ),
+                          column(width = 2, p(strong("Longitude")) ),
+                          column(width = 2, p(strong("Planting Date")) ),
+                          column(width = 2, p(strong("Harvesting Date")) ),
+                          column(width = 2, p(strong("Extraction interval")) ),
+                   ),
+                   column(width = 12, style = "background-color:grey; color: #FFFFFF",
+                          column(width = 2, uiOutput(ns("environment")) ),
+                          column(width = 2, uiOutput(ns("latitude")) ),
+                          column(width = 2, uiOutput(ns("longitude")) ),
+                          column(width = 2, uiOutput(ns("plantingDate")) ),
+                          column(width = 2, uiOutput(ns("harvestingDate")) ),
+                          column(width = 2, selectInput(ns("temporal"),label=NULL, choices = list("hourly","daily","monthly"), selected = "hourly"  ) ),
+                   ),
+                   h4(strong(span("Visualizations below aim to help you pick the right parameter values. Please inspect them.", style="color:green"))),
+                   hr(style = "border-top: 3px solid #4c4c4c;"),
+                   shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                       column(width=12, style = "height:410px; overflow-y: scroll;overflow-x: scroll;",
+                                              p(span("Preview of coordinates selected for extraction.", style="color:black")),
+                                              plotly::plotlyOutput(ns("plotMeteo")),
+                                       ),
+                   )
+          ),
+          tabPanel("Run extraction", icon = icon("play"),
+                   br(),
+                   actionButton(ns("rungetWeather"), "Extract", icon = icon("play-circle")),
+                   textOutput(ns("outgetWeather")),
+          ),
+        ), # end of tabset
+        # tags$p('Comming soon!', style = 'color: red; font-size: 20px; margin-top: 25px;'),
+
+
       ),
       tabPanel(
         title = 'QTL profile',
-        value = ns('tab2'),
+        value = ns('tab5'),
         fluidRow(
           style = 'padding: 30px;',
           # Source: Upload (web interface to temp local directory) or URL (optional username/password to access)
@@ -442,35 +487,9 @@ mod_getData_ui <- function(id){
           ),
           hr(style = "border-top: 1px solid #4c4c4c;"),
           DT::DTOutput(ns('preview_qtl')),
-        )
-      ),
-      tabPanel(
-        title = 'Stored objects',
-        value = ns('tab5'),
-        tags$br(),
-
-        selectInput(
-          inputId = ns('previous_object_input'),
-          label   = 'Object Source*: ',
-          choices = list('Upload from PC' = 'pcfile', 'Upload from cloud' = 'cloudfile'),
-          width   = '200px'
         ),
 
-        tags$span(id = ns('previous_object_file_holder'),
-                  fileInput(
-                    inputId = ns('previous_object_file'),
-                    label   = NULL,
-                    width   = '400px',
-                    accept  = c('.rds','.RData')
-                  ),
-                  textOutput(ns("outLoad2")),
-        ),
-        tags$div(id = ns('previous_object_retrieve'),
-                 actionButton(ns("refreshPreviousAnalysis"), "Click to retrieve previous analysis"),
-                 uiOutput(ns('previous_input2')),
-                 actionButton(ns("runLoadPrevious"), "Load analysis", icon = icon("play-circle")),
-                 textOutput(ns("outLoad")),
-        ),
+
       ),
     ),
 
@@ -556,6 +575,8 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
           QBMS::set_qbms_config(url = input$pheno_db_url, engine = 'breedbase', brapi_ver = 'v1')
         }
+
+        output$preview_pheno <- DT::renderDT(NULL)
       }
     )
 
@@ -577,7 +598,7 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
                                    client_id     = '5crahiqorgj0lppt3n9dkulkst',
                                    client_secret = '1sf4tipbp4arj3d5cncjmrvk9c2cu30gor5618hnh8rgkp6v5fs')
 
-              # IRRI production instance (https://prod-cb.ebs.irri.org/)
+                # IRRI production instance (https://prod-cb.ebs.irri.org/)
               } else if (ebs_domain == 'ebs.irri.org') {
                 ebs_brapi <- sub('(.+)//prod-cb\\.(.+)', '\\1//prod-cbbrapi.\\2', input$pheno_db_url)
                 QBMS::set_qbms_config(url = ebs_brapi, engine = 'ebs', brapi_ver = 'v2')
@@ -586,8 +607,8 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
                                    client_id     = '7s4mb2tu4884679rmbucsuopk1',
                                    client_secret = 'nf4m8qobpj8eplpg0a9bbo63g69vh0r3p8rbovtfb0udd28rnk9')
 
-              # CIMMYT instances (https://cb-maize.ebs.cimmyt.org, https://cb-staging.ebs.cimmyt.org/)
-              # or evaluation instances (https://cb-mee.ebsproject.org, https://cb-ree.ebsproject.org, and https://cb-wee.ebsproject.org)
+                # CIMMYT instances (https://cb-maize.ebs.cimmyt.org, https://cb-staging.ebs.cimmyt.org/)
+                # or evaluation instances (https://cb-mee.ebsproject.org, https://cb-ree.ebsproject.org, and https://cb-wee.ebsproject.org)
               } else if (ebs_domain == 'ebs.cimmyt.org' || ebs_instance %in% c('cb-mee', 'cb-ree', 'cb-wee')) {
                 ebs_brapi <- sub('(.+)//cb-(.+)', '\\1//cbbrapi-\\2', input$pheno_db_url)
                 QBMS::set_qbms_config(url = ebs_brapi, engine = 'ebs', brapi_ver = 'v2')
@@ -611,25 +632,31 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
             golem::invoke_js('showid', ns('data_server_holder'))
 
-            shinybusy::show_modal_spinner('fading-circle', text = 'Loading Programs...')
-
             if (input$pheno_db_type == 'bms') {
+              shinybusy::show_modal_spinner('fading-circle', text = 'Loading Crops...')
+
               pheno_db_crops <- QBMS::list_crops()
 
-              updateSelectInput(session,
-                                inputId = 'pheno_db_crop',
-                                label   = 'Crop: ',
-                                choices = pheno_db_crops)
+              updateSelectizeInput(session,
+                                   inputId = 'pheno_db_crop',
+                                   label   = 'Crop: ',
+                                   choices = c('', pheno_db_crops))
+              shinybusy::remove_modal_spinner()
             } else {
+              shinybusy::show_modal_spinner('fading-circle', text = 'Loading Programs...')
+
               pheno_db_programs <- QBMS::list_programs()
 
-              updateSelectInput(session,
-                                inputId = 'pheno_db_program',
-                                label   = 'Breeding Program: ',
-                                choices = pheno_db_programs)
+              updateSelectizeInput(session,
+                                   inputId = 'pheno_db_program',
+                                   label   = 'Breeding Program: ',
+                                   choices = c('', pheno_db_programs))
+
+              shinybusy::remove_modal_spinner()
             }
 
-            shinybusy::remove_modal_spinner()
+            output$preview_pheno <- DT::renderDT(NULL)
+
           },
           error = function(e) {
             shinyWidgets::show_alert(title = 'Invalid Credentials!', type = 'error')
@@ -647,10 +674,10 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
         pheno_db_programs <- QBMS::list_programs()
 
-        updateSelectInput(session,
-                          inputId = 'pheno_db_program',
-                          label   = 'Breeding Program: ',
-                          choices = pheno_db_programs)
+        updateSelectizeInput(session,
+                             inputId = 'pheno_db_program',
+                             label   = 'Breeding Program: ',
+                             choices = c('', pheno_db_programs))
 
         shinybusy::remove_modal_spinner()
       }
@@ -659,16 +686,73 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
     observeEvent(
       input$pheno_db_program,
       if (input$pheno_db_program != '') {
-        shinybusy::show_modal_spinner('fading-circle', text = 'Loading Trials...')
+        if (input$pheno_db_type == 'breedbase') {
+          shinybusy::show_modal_spinner('fading-circle', text = 'Loading Folders...')
+        } else {
+          shinybusy::show_modal_spinner('fading-circle', text = 'Loading Trials...')
+        }
 
         QBMS::set_program(input$pheno_db_program)
 
         pheno_db_trials <- QBMS::list_trials()
 
-        updateSelectInput(session,
-                          inputId = 'pheno_db_trial',
-                          label   = 'Trial/Study: ',
-                          choices = pheno_db_trials)
+        if (input$pheno_db_type == 'breedbase') {
+          output$pheno_db_folder <- renderUI({
+            selectizeInput(
+              inputId = ns('pheno_db_folder'),
+              label   = 'Select Folder: ',
+              choices = c('', pheno_db_trials)
+            )
+          })
+        } else {
+          output$pheno_db_trial <- renderUI({
+            selectizeInput(
+              inputId = ns('pheno_db_trial'),
+              label   = 'Trial/Study: ',
+              choices = pheno_db_trials,
+              multiple = TRUE
+            )
+          })
+        }
+
+        shinybusy::remove_modal_spinner()
+      }
+    )
+
+    observeEvent(
+      input$pheno_db_folder,
+      if (input$pheno_db_folder != '') {
+        shinybusy::show_modal_spinner('fading-circle', text = 'Loading Trials...')
+
+        QBMS::set_trial(input$pheno_db_folder)
+
+        tryCatch(
+          expr = {
+            pheno_db_studies <- QBMS::list_studies()$studyName
+
+            output$pheno_db_trial <- renderUI({
+              selectizeInput(
+                inputId = ns('pheno_db_trial'),
+                label   = 'Trial/Study: ',
+                choices = pheno_db_studies,
+                multiple = TRUE
+              )
+            })
+          },
+          error = function(e) {
+            if (input$pheno_db_type == 'breedbase') {
+              shinyWidgets::show_alert(title = 'Empty Folder!',
+                                       text = 'No trials found in the selected folder! Please choose the last/final folder that contains your trials in any nested folder structure.',
+                                       type = 'warning')
+            } else {
+              shinyWidgets::show_alert(title = e, type = 'error')
+            }
+
+            output$pheno_db_trial <- NULL
+
+            return(NULL)
+          }
+        )
 
         shinybusy::remove_modal_spinner()
       }
@@ -704,53 +788,90 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
     )
 
     pheno_data <- reactive({
-      if(length(input$pheno_input) > 0){
-        if (input$pheno_input == 'file') {
-          if (is.null(input$pheno_file)) {return(NULL)}else{
-            data <- as.data.frame(data.table::fread(input$pheno_file$datapath, sep = input$pheno_sep,
-                                                    quote = input$pheno_quote, dec = input$pheno_dec, header = TRUE))
+      tryCatch(
+        expr = {
+          if(length(input$pheno_input) > 0){
+            if (input$pheno_input == 'file') {
+              if (is.null(input$pheno_file)) {return(NULL)}else{
+                data <- as.data.frame(data.table::fread(input$pheno_file$datapath, sep = input$pheno_sep,
+                                                        quote = input$pheno_quote, dec = input$pheno_dec, header = TRUE))
+              }
+            } else if (input$pheno_input == 'url') {
+              if (input$pheno_url == ''){return(NULL)} else{
+                data <- as.data.frame(data.table::fread(input$pheno_url, sep = input$pheno_sep,
+                                                        quote = input$pheno_quote, dec = input$pheno_dec, header = TRUE))
+              }
+            } else if (input$pheno_input == 'brapi') {
+              if (input$pheno_db_load != 1){
+                return(NULL)
+              } else {
+                shinybusy::show_modal_spinner('fading-circle', text = 'Loading Data...')
+
+                if (input$pheno_db_type == 'breedbase') {
+                  QBMS::set_study(input$pheno_db_trial)
+                  data <- QBMS::get_study_data()
+
+                  # get breedbase trait ontology
+                  ontology <- QBMS::get_trial_obs_ontology()
+                  fields   <- colnames(data)
+
+                  # replace long trait names with short ones from the ontology
+                  for (i in 1:length(fields)) {
+                    j <- which(ontology$name %in% fields[i])
+                    if (length(j) > 0) {
+                      if(!is.na(ontology$synonyms[[j]][1])) {
+                        fields[i] <- ontology$synonyms[[j]][1]
+                      }
+                    }
+                  }
+
+                  colnames(data) <- fields
+
+                } else {
+                  QBMS::set_trial(input$pheno_db_trial)
+                  data <- QBMS::get_trial_data()
+                }
+
+                data$trialName <- input$pheno_db_trial
+
+                shinybusy::remove_modal_spinner()
+
+                shinyWidgets::show_alert(title = 'Done!', type = 'success')
+              }
+            }
+
+            return(data)
           }
-        } else if (input$pheno_input == 'url') {
-          if (input$pheno_url == ''){return(NULL)} else{
-            data <- as.data.frame(data.table::fread(input$pheno_url, sep = input$pheno_sep,
-                                                    quote = input$pheno_quote, dec = input$pheno_dec, header = TRUE))
+        },
+        error = function(e) {
+          shinybusy::remove_modal_spinner()
+          if (input$pheno_db_type == 'ebs') {
+            shinyWidgets::show_alert(title = 'Access Denied!', type = 'error', text = 'You do not have permission to access this trial.')
+          } else {
+            shinyWidgets::show_alert(title = 'Error!', type = 'error', text = e)
           }
-        } else if (input$pheno_input == 'brapi') {
-          if (input$pheno_db_load != 1){return(NULL)} else {
-            shinybusy::show_modal_spinner('fading-circle', text = 'Loading Data...')
 
-            QBMS::set_trial(input$pheno_db_trial)
-            data <- QBMS::get_trial_data()
-
-            data$trialName <- input$pheno_db_trial
-
-            shinybusy::remove_modal_spinner()
-
-            shinyWidgets::show_alert(title = 'Done!', type = 'success')
-          }
+          return(NULL)
         }
-
-        return(data)
-      }
+      )
     })
 
     observeEvent(
       pheno_data(),
       {
+        #if (is.null(data())) return(NULL)
+
         temp <- data()
         temp$data$pheno <- pheno_data()
 
         output$preview_pheno <- DT::renderDT({
-          req(pheno_data())
-
-          DT::datatable(pheno_data(),
+          DT::datatable(temp$data$pheno,
                         extensions = 'Buttons',
                         options = list(dom = 'Blfrtip',
                                        scrollX = TRUE,
                                        buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
                                        lengthMenu = list(c(5,20,50,-1), c(5,20,50,'All')))
           )
-
         })
 
         if (input$pheno_input == 'brapi') {
@@ -759,75 +880,61 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
               inputId  = ns('brapi_traits'),
               label    = 'Trait(s):',
               multiple = TRUE,
-              choices  = as.list(c('', colnames(pheno_data()))),
+              choices  = as.list(c('', colnames(temp$data$pheno))),
             )
           })
 
-          ### BrAPI auto mapping #############################################
-          if ('year' %in% temp$metadata$pheno$parameter) {
-            temp$metadata$pheno[temp$metadata$pheno$parameter == 'year', 'value'] <- 'year'
-          } else {
-            temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'year', value = 'year'))
-          }
+          ### BrAPI auto mapping ###############################################
+          mapping <- list(
+            ebs = list(
+              year = 'year',
+              study = 'studyName',
+              rep = 'rep',
+              iBlock = 'block',
+              row = 'positionCoordinateY',
+              col = 'positionCoordinateX',
+              designation = 'germplasmName',
+              gid = 'germplasmDbId',
+              location = 'locationName',
+              trial = 'trialName',
+              entryType = 'entryType'
+            ),
+            bms = list(
+              year = 'year',
+              study = 'studyName',
+              rep = 'rep',
+              iBlock = 'block',
+              row = 'positionCoordinateY',
+              col = 'positionCoordinateX',
+              designation = 'germplasmName',
+              gid = 'germplasmDbId',
+              location = 'studyName',
+              trial = 'trialName',
+              entryType = 'entryType'
+            ),
+            breedbase = list(
+              year = 'studyYear',
+              study = 'studyName',
+              rep = 'replicate',
+              iBlock = 'blockNumber',
+              row = 'rowNumber',
+              col = 'colNumber',
+              designation = 'germplasmName',
+              gid = 'germplasmDbId',
+              location = 'locationName',
+              trial = 'trialName',
+              entryType = 'entryType'
+            )
+          )
 
-          if ('environment' %in% temp$metadata$pheno$parameter) {
-            temp$metadata$pheno[temp$metadata$pheno$parameter == 'environment', 'value'] <- 'studyName'
-          } else {
-            temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'environment', value = 'studyName'))
-          }
-
-          if ('rep' %in% temp$metadata$pheno$parameter) {
-            temp$metadata$pheno[temp$metadata$pheno$parameter == 'rep', 'value'] <- 'rep'
-          } else {
-            temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'rep', value = 'rep'))
-          }
-
-          if ('iBlock' %in% temp$metadata$pheno$parameter) {
-            temp$metadata$pheno[temp$metadata$pheno$parameter == 'iBlock', 'value'] <- 'block'
-          } else {
-            temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'iBlock', value = 'block'))
-          }
-
-          if ('row' %in% temp$metadata$pheno$parameter) {
-            temp$metadata$pheno[temp$metadata$pheno$parameter == 'row', 'value'] <- 'positionCoordinateY'
-          } else {
-            temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'row', value = 'positionCoordinateY'))
-          }
-
-          if ('col' %in% temp$metadata$pheno$parameter) {
-            temp$metadata$pheno[temp$metadata$pheno$parameter == 'col', 'value'] <- 'positionCoordinateX'
-          } else {
-            temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'col', value = 'positionCoordinateX'))
-          }
-
-          if ('designation' %in% temp$metadata$pheno$parameter) {
-            temp$metadata$pheno[temp$metadata$pheno$parameter == 'designation', 'value'] <- 'germplasmName'
-          } else {
-            temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'designation', value = 'germplasmName'))
-          }
-
-          if ('gid' %in% temp$metadata$pheno$parameter) {
-            temp$metadata$pheno[temp$metadata$pheno$parameter == 'gid', 'value'] <- 'germplasmDbId'
-          } else {
-            temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'gid', value = 'germplasmDbId'))
-          }
-
-          if ('location' %in% temp$metadata$pheno$parameter) {
-            temp$metadata$pheno[temp$metadata$pheno$parameter == 'location', 'value'] <- 'locationName'
-          } else {
-            temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'location', value = 'locationName'))
-          }
-
-          if ('trial' %in% temp$metadata$pheno$parameter) {
-            temp$metadata$pheno[temp$metadata$pheno$parameter == 'trial', 'value'] <- 'trialName'
-          } else {
-            temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'trial', value = 'trialName'))
-          }
-
-          if ('entryType' %in% temp$metadata$pheno$parameter) {
-            temp$metadata$pheno[temp$metadata$pheno$parameter == 'entryType', 'value'] <- 'entryType'
-          } else {
-            temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'entryType', value = 'entryType'))
+          for (field in c('year', 'study', 'rep', 'iBlock', 'row', 'col', 'designation', 'gid', 'location', 'trial', 'entryType')) {
+            if (mapping[[input$pheno_db_type]][[field]] %in% colnames(temp$data$pheno)) {
+              if (field %in% temp$metadata$pheno$parameter) {
+                temp$metadata$pheno[temp$metadata$pheno$parameter == field, 'value'] <- mapping[[input$pheno_db_type]][[field]]
+              } else {
+                temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = field, value = mapping[[input$pheno_db_type]][[field]]))
+              }
+            }
           }
 
           # shinybusy::show_modal_spinner('fading-circle', text = 'Loading Ontology...')
@@ -844,7 +951,7 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
 
           # dummy pedigree table
-          temp$data$pedigree <- data.frame(germplasmName = unique(pheno_data()$germplasmName), mother = NA, father = NA, yearOfOrigin = NA)
+          temp$data$pedigree <- data.frame(germplasmName = unique(temp$data$pheno$germplasmName), mother = NA, father = NA, yearOfOrigin = NA)
           temp$metadata$pedigree <- data.frame(parameter=c("designation","mother","father","yearOfOrigin"), value=c("germplasmName","mother","father","yearOfOrigin") )
           # stage       <- NA
           # pipeline    <- NA
@@ -858,38 +965,48 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
     )
 
     output$pheno_map <- renderUI({
+      if (is.null(pheno_data())) return(NULL)
+
       header <- colnames(pheno_data())
       pheno_map <- lapply(map, function(x) {
         column(3,
                selectInput(
                  inputId  = ns(paste0('select', x)),
-                 label    = x,
+                 label    = HTML(ifelse(x %in% c('designation','trait','location'), as.character(p(x, span('(*required)',style="color:red"))),  ifelse(x %in% c('rep','iBlock','row','col'), as.character(p(x, span('(*recommended)',style="color:grey"))), as.character(p(x, span('(*optional)',style="color:grey")))  )   ) ) ,
                  multiple = ifelse(x == 'trait', TRUE, FALSE),
                  choices  = as.list(c('', header)),
+                 selected = ifelse(length(grep(x,header, ignore.case = TRUE)) > 0, header[grep(x,header, ignore.case = TRUE)[1]], '')
                ),
 
                # shinyBS::bsTooltip(ns(paste0('select', x)), 'Mapping this!', placement = 'left', trigger = 'hover'),
 
                renderPrint({
-                 req(input[[paste0('select', x)]])
+                 # req(input[[paste0('select', x)]])
                  temp <- data()
                  if (x == 'trait') {
                    temp$metadata$pheno <- temp$metadata$pheno[temp$metadata$pheno$parameter != 'trait',]
                    for (i in input[[paste0('select', x)]]) {
                      temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = 'trait', value = i))
-                     temp$data$pheno[,i] <- as.numeric(temp$data$pheno[,i])
+                     if(!is.numeric(temp$data$pheno[,i])){temp$data$pheno[,i] <- as.numeric(gsub(",","",temp$data$pheno[,i]))}
                    }
                  } else { # is any other column other than trait
-                   if (x %in% temp$metadata$pheno$parameter) {
+                   if (x %in% temp$metadata$pheno$parameter & input[[paste0('select', x)]] != '') {
                      temp$metadata$pheno[temp$metadata$pheno$parameter == x, 'value'] <- input[[paste0('select', x)]]
                    } else {
                      temp$metadata$pheno <- rbind(temp$metadata$pheno, data.frame(parameter = x, value = input[[paste0('select', x)]]))
                    }
+                   if(x %in% c("designation","study") & input[[paste0('select', x)]] != ''){
+                     temp$data$pheno[,input[[paste0('select', x)]]] <- stringi::stri_trans_general(temp$data$pheno[,input[[paste0('select', x)]]], "Latin-ASCII")
+                   }
+                   if(input[[paste0('select', x)]] == ''){
+                     temp$metadata$pheno <- temp$metadata$pheno[-which(temp$metadata$pheno$parameter == x), ]
+                   }
                  }
-
                  if (x == 'designation') {
-                   temp$data$pedigree <- data.frame(designation = unique(pheno_data()[[input[[paste0('select', x)]]]]), mother = NA, father = NA, yearOfOrigin = NA)
-                   temp$metadata$pedigree <- data.frame(parameter=c("designation","mother","father","yearOfOrigin"), value=c("designation","mother","father","yearOfOrigin") )
+                   if(input[[paste0('select', x)]] != ''){
+                     temp$data$pedigree <- data.frame(designation = unique(pheno_data()[[input[[paste0('select', x)]]]]), mother = NA, father = NA, yearOfOrigin = NA)
+                     temp$metadata$pedigree <- data.frame(parameter=c("designation","mother","father","yearOfOrigin"), value=c("designation","mother","father","yearOfOrigin") )
+                   }
                  }
                  data(temp)
                }),
@@ -926,42 +1043,90 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
       }
 
     )
-    outConcatenateEnv <- eventReactive(input$concatenateEnv, { # button to concatenate other columns in environment
+    outConcatenateEnv <- eventReactive(input$concatenateEnv, { # button to concatenate other columns in study
       req(data())
       myObject <- data()
+      myObject$metadata$pheno <- myObject$metadata$pheno %>% dplyr::arrange(factor(parameter, levels = c("year","season","location","trial","study")))
       environmentColumn <- which(myObject$metadata$pheno$parameter == "environment")
-      if(length(environmentColumn) > 0){ # user has mapped an environment column
-        otherEnvironmentColumn <- which(myObject$metadata$pheno$parameter %in% c("year","season","location","trial","environment"))
+      if(length(environmentColumn) > 0){ # user has mapped an study column
+        otherEnvironmentColumn <- which(myObject$metadata$pheno$parameter %in% c("year","season","location","trial","study"))
         if(length(otherEnvironmentColumn) > 1){ # if user has mapped more than one column
           myObject$data$pheno[,myObject$metadata$pheno[environmentColumn, "value"]] <- apply(myObject$data$pheno[, myObject$metadata$pheno[otherEnvironmentColumn, "value"], drop=FALSE],1, function(x){paste(x, collapse = "_")} )
           data(myObject)
-          cat(paste("Columns",paste(myObject$metadata$pheno[otherEnvironmentColumn, "value"], collapse = ", "), "concatenated and pasted in the",myObject$metadata$pheno[environmentColumn, "value"], "column"))
-        }else{cat("No additional columns to concatenate to your 'environment' column")}
-      }else{ # user has not mapped an environment column, we will add it
-        otherEnvironmentColumn <- which(myObject$metadata$pheno$parameter %in% c("year","season","location","trial","environment"))
-        if(length(otherEnvironmentColumn) > 0){ # if user has mapped more than one column
+          shinyalert::shinyalert(title = "Success!", text = paste("Columns",paste(myObject$metadata$pheno[otherEnvironmentColumn, "value"], collapse = ", "), "concatenated and pasted in the",myObject$metadata$pheno[environmentColumn, "value"], "column"), type = "success")
+          # cat(paste("Columns",paste(myObject$metadata$pheno[otherEnvironmentColumn, "value"], collapse = ", "), "concatenated and pasted in the",myObject$metadata$pheno[environmentColumn, "value"], "column"))
+        }else if(length(otherEnvironmentColumn) == 1){
+          myObject$data$pheno[,myObject$metadata$pheno[environmentColumn, "value"]] <- myObject$data$pheno[, myObject$metadata$pheno[otherEnvironmentColumn, "value"]]
+          data(myObject)
+          shinyalert::shinyalert(title = "Success!", text = paste0("No additional columns to concatenate. '", myObject$metadata$pheno[environmentColumn, "value"], "' column is equal to ", myObject$metadata$pheno[otherEnvironmentColumn, "value"]), type = "success")
+          # cat("No additional columns to concatenate to your 'study' column")
+        }else {
+          myObject$metadata$pheno <- myObject$metadata$pheno[-which(myObject$metadata$pheno$parameter == "environment"), ]
+          myObject$data$pheno <- myObject$data$pheno [,!(names(myObject$data$pheno) %in% c("environment"))]
+          data(myObject)
+          shinyalert::shinyalert(title = "Error!", text = paste("Please map at least one of the columns 'year', 'season', 'location', 'trial' or 'study' to be able to compute the environments and perform a genetic evaluation "), type = "error")
+        }
+      }else{ # user has not mapped an study column, we will add it
+        otherEnvironmentColumn <- which(myObject$metadata$pheno$parameter %in% c("year","season","location","trial","study"))
+        if(length(otherEnvironmentColumn) > 1){ # if user has mapped more than one column
           myObject$data$pheno[,"environment"] <- apply(myObject$data$pheno[, myObject$metadata$pheno[otherEnvironmentColumn, "value"], drop=FALSE],1, function(x){paste(x, collapse = "_")} )
           myObject$metadata$pheno <- rbind(myObject$metadata$pheno, data.frame(parameter = 'environment', value = 'environment' ))
           data(myObject)
-          cat(paste("Columns",paste(myObject$metadata$pheno[otherEnvironmentColumn, "value"], collapse = ", "), "concatenated and pasted in a column named 'environment' "))
-        }else{cat(paste("Please map at least one of the columns 'year', 'season', 'location', 'trial' or 'environment' to be able to do a genetic evaluation "))}
+          shinyalert::shinyalert(title = "Success!", text = paste("Columns",paste(myObject$metadata$pheno[otherEnvironmentColumn, "value"], collapse = ", "), "concatenated and pasted in a column named 'environment' "), type = "success")
+          # cat(paste("Columns",paste(myObject$metadata$pheno[otherEnvironmentColumn, "value"], collapse = ", "), "concatenated and pasted in a column named 'environment' "))
+        }else if(length(otherEnvironmentColumn) == 1){
+          myObject$data$pheno[,"environment"] <- myObject$data$pheno[, myObject$metadata$pheno[otherEnvironmentColumn, "value"]]
+          myObject$metadata$pheno <- rbind(myObject$metadata$pheno, data.frame(parameter = 'environment', value = 'environment' ))
+          data(myObject)
+          shinyalert::shinyalert(title = "Success!", text = paste("No additional columns to concatenate. 'environment' column is equal to", myObject$metadata$pheno[otherEnvironmentColumn, " value"]), type = "success")
+        }else{
+          shinyalert::shinyalert(title = "Error!", text = paste("Please map at least one of the columns 'year', 'season', 'location', 'trial' or 'study' to be able to do compute the environments and perform a genetic evaluation "), type = "error")
+          # cat(paste("Please map at least one of the columns 'year', 'season', 'location', 'trial' or 'study' to be able to do compute the environments and perform a genetic evaluation "))
+        }
       }
     })
     output$outConcatenateEnv <- renderPrint({
       outConcatenateEnv()
+    })
+
+    # change color of updated study column
+    observeEvent(input$concatenateEnv,{
+      output$preview_pheno <- DT::renderDT({
+        myObject <- data()
+        phenoColnames <- colnames(myObject$data$pheno)
+        if("environment" %in% phenoColnames){
+          newPhenoColnames <- c("environment", setdiff(phenoColnames, "environment"))
+          myObject$data$pheno <- myObject$data$pheno[, newPhenoColnames]
+          environmentColumnName <- myObject$metadata$pheno$value[which(myObject$metadata$pheno$parameter == "environment")]
+          DT::datatable(myObject$data$pheno,
+                        extensions = 'Buttons',
+                        options = list(dom = 'Blfrtip',
+                                       scrollX = TRUE,
+                                       buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                       lengthMenu = list(c(5,20,50,-1), c(5,20,50,'All')))) %>%
+            DT::formatStyle(environmentColumnName, backgroundColor = "#009E60")
+        } else{
+          DT::datatable(myObject$data$pheno,
+                        extensions = 'Buttons',
+                        options = list(dom = 'Blfrtip',
+                                       scrollX = TRUE,
+                                       buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                       lengthMenu = list(c(5,20,50,-1), c(5,20,50,'All'))))
+        }
+      })
     })
     ### Genotypic tab controls #################################################
 
     observeEvent(
       input$geno_input,
       if(length(input$geno_input) > 0){ # added
-        if (input$geno_input == 'file' ) {
+        if (input$geno_input %in% c('file', 'vcf.file')) {
           golem::invoke_js('showid', ns('geno_file_holder'))
           golem::invoke_js('hideid', ns('geno_url'))
           golem::invoke_js('hideid', ns('geno_table_mapping'))
           golem::invoke_js('hideid', ns('geno_table_options'))
           updateCheckboxInput(session, 'geno_example', value = FALSE)
-        } else if (input$geno_input == 'url') {
+        } else if (input$geno_input %in% c('url', 'vcf.url')) {
           golem::invoke_js('hideid', ns('geno_file_holder'))
           golem::invoke_js('hideid', ns('geno_table_mapping'))
           golem::invoke_js('hideid', ns('geno_table_options'))
@@ -1002,6 +1167,7 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
         return(NULL)
       }
     })
+
     observeEvent(c(geno_data_table()), { # update values for columns in designation and first snp and last snp
       req(geno_data_table())
       provGeno <- geno_data_table()
@@ -1016,6 +1182,7 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
       updateSelectizeInput(session, "geno_table_lastsnp", choices = colnames(provGeno)[max(c(1,ncol(provGeno)-100)):ncol(provGeno)], selected = character(0))
       updateSelectizeInput(session, "geno_table_designation", choices = colnames(provGeno)[1:min(c(ncol(provGeno),100))], selected = character(0))
     })
+
     observeEvent( # reactive for the csv geno read, active once the user has selected the proper columns
       c(geno_data_table(), input$geno_table_firstsnp, input$geno_table_lastsnp, input$geno_table_designation),
       {
@@ -1026,12 +1193,23 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
         if(!is.null(input$geno_table_firstsnp) & !is.null(input$geno_table_lastsnp) & !is.null(input$geno_table_designation) ){
           temp <- data()
           tempG <- geno_data_table()
-          rownames(tempG) <- tempG[,which(colnames(tempG)==input$geno_table_designation)]
-          tempG <- tempG[,which(colnames(tempG)==input$geno_table_firstsnp):which(colnames(tempG)==input$geno_table_lastsnp)]
+          tempG <- tempG[which(!duplicated(tempG[,which(colnames(tempG)==input$geno_table_designation)[1]])),]
+          rownamestempG <- tempG[,which(colnames(tempG)==input$geno_table_designation)[1] ]
           missingData=c("NN","FAIL","FAILED","Uncallable","Unused","NA","")
-          for(iMiss in missingData){tempG[which(tempG==iMiss, arr.ind = TRUE)] <- NA}
           shinybusy::show_modal_spinner('fading-circle', text = 'Converting...')
+          for(iMiss in missingData){tempG[which(tempG==iMiss, arr.ind = TRUE)] <- NA}
+          ## check if the data is in single letter format
+          markersToSample <- sample(which(colnames(tempG)==input$geno_table_firstsnp):which(colnames(tempG)==input$geno_table_lastsnp),  min(c(ncol(tempG),20)) )
+          nCharList <- list()
+          for(iMark in 1:length(markersToSample)){nCharList[[iMark]] <- na.omit(unique(nchar(tempG[,markersToSample[iMark]])))}
+          singleLetter <- which(unique(unlist(nCharList)) == 1)
+          if(length(singleLetter) > 0){
+            tempG <- cgiarBase::transMarkerSingle( markerDTfile= tempG, badCall=NULL,genoColumn=input$geno_table_designation,firstColum= input$geno_table_firstsnp,lastColumn=input$geno_table_lastsnp,verbose=FALSE)
+          }
+          tempG <- tempG[,which(colnames(tempG)==input$geno_table_firstsnp):which(colnames(tempG)==input$geno_table_lastsnp)]
+          ##
           tempG <- sommer::atcg1234(tempG, maf = -1, imp = FALSE)
+          rownames(tempG$M) <- rownamestempG
           shinybusy::remove_modal_spinner()
           temp$data$geno <- tempG$M
           refAlleles <- tempG$ref.alleles
@@ -1047,20 +1225,33 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
     geno_data <- reactive({
       if(length(input$geno_input) > 0){ # added
-        if (input$geno_input == 'file' ) {
+        if (input$geno_input %in% c('file', 'vcf.file')) {
           if (is.null(input$geno_file)) {return(NULL)}else{
             snps_file <- input$geno_file$datapath
           }
-        } else {
+        } else if (input$geno_input %in% c('url', 'vcf.url')) {
           if (input$geno_url == '') {return(NULL)}else{
             snps_file <- input$geno_url
           }
+        } else {
+          return(NULL)
         }
 
         # library(vcfR); vcf_data <- vcfR::read.vcfR(snps_file); hmp_data <- vcfR::vcfR2hapmap(vcf.data)
 
         shinybusy::show_modal_spinner('fading-circle', text = 'Loading...')
-        df <- as.data.frame(data.table::fread(snps_file, sep = '\t', header = TRUE))
+        if (input$geno_input %in% c('file', 'url')) {
+          df <- as.data.frame(data.table::fread(snps_file, sep = '\t', header = TRUE))
+
+        } else if (input$geno_input %in% c('vcf.file', 'vcf.url')) {
+          vcf.data  <- vcfR::read.vcfR(snps_file)
+
+          df <- vcfR::vcfR2hapmap(vcf.data)
+          df <- df[-1,]
+
+          rm(vcf.data)
+        }
+
         shinybusy::remove_modal_spinner()
 
         hapmap_snp_attr <- c('rs#', 'alleles', 'chrom', 'pos', 'strand', 'assembly#',
@@ -1106,7 +1297,7 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
           shinyWidgets::show_alert(title = 'Error !!', text = 'Not a valid HapMap file format :-(', type = 'error')
           return(NULL)
         }
-        return(df)
+        return(list(df,snps_file))
 
       }else{
         return(NULL)
@@ -1116,30 +1307,31 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
     output$chrom_summary <- renderTable({
       if (!is.null(geno_data())) {
+        gd<-geno_data()[[1]]
         data.frame(
-          chrom = unique(geno_data()[,'chrom']),
-          min_pos = aggregate(pos ~ chrom, data = geno_data(), FUN = min)[,2],
-          max_pos = aggregate(pos ~ chrom, data = geno_data(), FUN = max)[,2],
-          snps_count = aggregate(pos ~ chrom, data = geno_data(), FUN = length)[,2]
+          chrom = unique(gd[,'chrom']),
+          min_pos = aggregate(pos ~ chrom, data = gd, FUN = min)[,2],
+          max_pos = aggregate(pos ~ chrom, data = gd, FUN = max)[,2],
+          snps_count = aggregate(pos ~ chrom, data = gd, FUN = length)[,2]
         )
       }
     })
 
     output$geno_summary <- renderText({
       temp <- data()
-
-      if (!is.null(geno_data()) & any(temp$metadata$pheno$parameter == 'designation')) {
+      gd <- geno_data()[[1]]
+      if (!is.null(gd) & any(temp$metadata$pheno$parameter == 'designation')) {
         designationColumn <- temp$metadata$pheno[which(temp$metadata$pheno$parameter == "designation"),"value"]
         paste(
           "Data Integrity Checks:\n",
 
-          sum(colnames(geno_data()[, -c(1:11)]) %in% unique(temp$data$pheno[, designationColumn ])),
+          sum(colnames(gd[, -c(1:11)]) %in% unique(temp$data$pheno[, designationColumn ])),
           "Accessions exist in both phenotypic and genotypic files (will be used to train the model)\n",
 
-          sum(!colnames(geno_data()[, -c(1:11)]) %in% unique(temp$data$pheno[, designationColumn ])),
+          sum(!colnames(gd[, -c(1:11)]) %in% unique(temp$data$pheno[, designationColumn ])),
           "Accessions have genotypic data but no phenotypic (will be predicted, add to pheno data file with NA value)\n",
 
-          sum(!unique(temp$data$pheno[, designationColumn ]) %in% colnames(geno_data()[, -c(1:11)])),
+          sum(!unique(temp$data$pheno[, designationColumn ]) %in% colnames(gd[, -c(1:11)])),
           'Accessions have phenotypic data but no genotypic (will not contribute to the training model)'
         )
       }
@@ -1149,17 +1341,17 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
       geno_data(),
       {
         temp <- data()
+        gd<-geno_data()[[1]]
+        temp$data$geno <- t(as.matrix(gd[, -c(1:11)])) - 1
+        colnames(temp$data$geno) <- gd$`rs#`
 
-        temp$data$geno <- t(as.matrix(geno_data()[, -c(1:11)])) - 1
-        colnames(temp$data$geno) <- geno_data()$`rs#`
-
-        map <- geno_data()[, c('rs#', 'chrom', 'pos', 'alleles', 'alleles')]
+        map <- gd[, c('rs#', 'chrom', 'pos', 'alleles', 'alleles')]
         colnames(map) <- c('marker', 'chr', 'pos', 'refAllele', 'altAllele')
         map$refAllele <- substr(map$refAllele, 1, 1)
         map$altAllele <- substr(map$altAllele, 3, 3)
 
         temp$metadata$geno <- map
-
+        temp$data$genodir<-geno_data()[[2]]
         data(temp)
       }
     )
@@ -1315,11 +1507,11 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
         designationColumnInPed <- tmp$metadata$pedigree[which(tmp$metadata$pedigree$parameter == "designation"),"value"]
         paste(
           "Data Integrity Checks:\n",
-          sum(ped[, designationColumnInPed ] %in% unique(tmp$data$pheno[, designationColumnInPheno ])),
+          ifelse( (length(designationColumnInPed)+length(designationColumnInPheno) ) == 2, sum(ped[, designationColumnInPed ] %in% unique(tmp$data$pheno[, designationColumnInPheno ]) ) , 0),
           "Accessions exist in both phenotypic and pedigree files\n",
-          sum(!unique(tmp$data$pheno[, designationColumnInPheno ]) %in% ped[, designationColumnInPed ]),
+          ifelse( length(designationColumnInPheno) > 0 , sum(!unique(tmp$data$pheno[, designationColumnInPheno ]) %in% ped[, designationColumnInPed ]), 0),
           "Accessions have phenotypic data but no pedigree data\n",
-          ifelse(any(tmp$metadata$pedigree$parameter == 'yearOfOrigin'),  sum(ped[, designationColumnInPed ] %in% unique(tmp$data$pheno[, designationColumnInPheno ])) ,0),
+          ifelse(any(tmp$metadata$pedigree$parameter == 'yearOfOrigin') & (length(designationColumnInPed)+length(designationColumnInPheno) ) == 2,  sum(ped[, designationColumnInPed ] %in% unique(tmp$data$pheno[, designationColumnInPheno ])) ,0),
           "Accessions in phenotypic data have no year of origin info\n"
         )
       }
@@ -1448,78 +1640,201 @@ mod_getData_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
     )
 
 
-    ### Previous-analyses tab controls ##################################################
-
-    observeEvent(
-      input$previous_object_input,
-      if(length(input$previous_object_input) > 0){ # added
-        if (input$previous_object_input == 'pcfile') {
-          golem::invoke_js('showid', ns('previous_object_file_holder'))
-          golem::invoke_js('hideid', ns('previous_object_retrieve'))
-        } else if (input$previous_object_input == 'cloudfile') {
-          golem::invoke_js('hideid', ns('previous_object_file_holder'))
-          golem::invoke_js('showid', ns('previous_object_retrieve'))
+    ### Weather data server ####################################################
+    # warning message
+    output$warningMessage <- renderUI(
+      if(is.null(data())){
+        HTML( as.character(div(style="color: red; font-size: 20px;", "Please retrieve or load your phenotypic data using the 'Data Retrieval' tab.")) )
+      }else{ # data is there
+        mappedColumns <- length(which(c("environment") %in% data()$metadata$pheno$parameter))
+        if(mappedColumns == 1){ HTML( as.character(div(style="color: green; font-size: 20px;", "Data is complete, please proceed to identify the location of your environments.")) )
+        }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please make sure that you have computed the 'environment' column in 'Data Retrieval' tab for Phenotypes.")) )
         }
       }
     )
 
+    output$environment <- renderUI({
+      req(data())
+      dtProv = data()$data$pheno
+      paramsPheno <- data()$metadata$pheno
+      colnames(dtProv) <- cgiarBase::replaceValues(colnames(dtProv), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+      envCol <- paramsPheno[which(paramsPheno$parameter == "environment"),"value"]
+      if(length(envCol) > 0){
+        fieldNames <- as.character(unique(dtProv[,"environment"]))
+        lapply(1:length(fieldNames), function(i) {
+          tags$div(id = "inline", textInput(
+            session$ns(paste0('environment',i)),
+            NULL,
+            value=fieldNames[i], #width = '800px',
+          ))
+        })
+      }
+    })
+    output$latitude <- renderUI({
+      req(data())
+      dtProv = data()$data$pheno
+      paramsPheno <- data()$metadata$pheno
+      colnames(dtProv) <- cgiarBase::replaceValues(colnames(dtProv), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+      envCol <- paramsPheno[which(paramsPheno$parameter == "environment"),"value"]
+      if(length(envCol) > 0){
+        fieldNames <- as.character(unique(dtProv[,"environment"]))
+        lapply(1:length(fieldNames), function(i) {
+          tags$div(id = "inline",  numericInput(
+            session$ns(paste0('latitude',i)),
+            NULL,
+            value = 0
+          ))
+        })
+      }
+    })
+    output$longitude <- renderUI({
+      req(data())
+      dtProv = data()$data$pheno
+      paramsPheno <- data()$metadata$pheno
+      colnames(dtProv) <- cgiarBase::replaceValues(colnames(dtProv), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+      envCol <- paramsPheno[which(paramsPheno$parameter == "environment"),"value"]
+      if(length(envCol) > 0){
+        fieldNames <- as.character(unique(dtProv[,"environment"]))
+        lapply(1:length(fieldNames), function(i) {
+          tags$div(id = "inline", numericInput(
+            session$ns(paste0('longitude',i)),
+            NULL,
+            value = 0
+          ))
+        })
+      }
+    })
+    output$plantingDate <- renderUI({
+      req(data())
+      dtProv = data()$data$pheno
+      paramsPheno <- data()$metadata$pheno
+      colnames(dtProv) <- cgiarBase::replaceValues(colnames(dtProv), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+      envCol <- paramsPheno[which(paramsPheno$parameter == "environment"),"value"]
+      if(length(envCol) > 0){
+        fieldNames <- as.character(unique(dtProv[,"environment"]))
+        lapply(1:length(fieldNames), function(i) {
+          tags$div(id = "inline", dateInput(
+            session$ns(paste0('plantingDate',i)),
+            NULL,
+            value = Sys.Date()-31
+          ))
+        })
+      }
+    })
+    output$harvestingDate <- renderUI({
+      req(data())
+      dtProv = data()$data$pheno
+      paramsPheno <- data()$metadata$pheno
+      colnames(dtProv) <- cgiarBase::replaceValues(colnames(dtProv), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+      envCol <- paramsPheno[which(paramsPheno$parameter == "environment"),"value"]
+      if(length(envCol) > 0){
+        fieldNames <- as.character(unique(dtProv[,"environment"]))
+        lapply(1:length(fieldNames), function(i) {
+          tags$div(id = "inline", dateInput(
+            session$ns(paste0('harvestingDate',i)),
+            NULL,
+            value = Sys.Date()-30
+          ))
+        })
+      }
+    })
 
-    output$previous_input2 <- renderUI({}) # this 2 lines avoid issues when displaying an uiOutput
-    outputOptions(output, "previous_input2", suspendWhenHidden = FALSE)
-    observeEvent( # this is the part where we either load the previous analysis from cloud or PC
-      c(input$previous_object_input),
-      {
-        if(input$previous_object_input == 'cloudfile'){ # upload from cloud
+    ##
+    dataWeather = reactive({
+      req(data())
+      dtProv = data()$data$pheno
+      paramsPheno <- data()$metadata$pheno
+      colnames(dtProv) <- cgiarBase::replaceValues(colnames(dtProv), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+      envCol <- paramsPheno[which(paramsPheno$parameter == "environment"),"value"]
+      if (length(envCol) > 0) {
+        fieldNames <- as.character(unique(dtProv[,"environment"]))
+        values <- values2 <- values3 <- values4 <- values5 <- vector()
+        for (i in 1:length(fieldNames)) {
+          tempval <- reactive({paste0('input$','latitude',i)})
+          values[i] <- tempval()
+          values[i] <- eval(parse(text = values[i]))
+          tempval <- reactive({paste0('input$','longitude',i)})
+          values2[i] <- tempval()
+          values2[i] <- eval(parse(text = values2[i]))
+          tempval <- reactive({paste0('input$','plantingDate',i)})
+          values3[i] <- tempval()
+          values3[i] <- eval(parse(text = values3[i])) # eval(lubridate::parse_date_time2(as.character(values3[i]), orders='Ymd'))
+          tempval <- reactive({paste0('input$','harvestingDate',i)})
+          values4[i] <- tempval()
+          values4[i] <- eval(parse(text = values4[i]))
+          tempval <- reactive({paste0('input$','environment',i)})
+          values5[i] <- tempval()
+          values5[i] <- eval(parse(text = values5[i]))
+        }
+        values <- as.numeric( as.data.frame(t(as.numeric(values))) );
+        values2 <- as.numeric( as.data.frame(t(as.numeric(values2))) );
+        values3 <- as.Date(as.numeric( as.data.frame(t(as.numeric(values3))) ), origin="1970-01-01", tz="GMT")
+        values4 <- as.Date(as.numeric( as.data.frame(t(as.numeric(values4))) ), origin="1970-01-01", tz="GMT")
+        values5 <- as.character(as.data.frame(t(as.character(values5))) )
+        xx <- data.frame(latitude=values, longitude=values2, plantingDate=values3, harvestingDate=values4, environment=values5)
+        return(xx)
+      }
+    })
+    ##produce the map plot
+    output$plotMeteo <-  plotly::renderPlotly({
+      req(data())
+      xx <- dataWeather()
+      if(!is.null(xx)){
+        fig <- xx
+        fig <- fig %>%
+          plotly::plot_ly(
+            lat = ~latitude,
+            lon = ~longitude,
+            type = "scattermapbox",
+            hovertext = ~environment, #us_cities[,"City"],
+            marker = list(color = "fuchsia"))
+        fig <- fig %>%
+          plotly::layout(
+            mapbox = list(
+              style = 'open-street-map',
+              zoom =1,
+              center = list(lon = 0, lat = 0)
+            )
+          )
+        # }
+        fig
+      }
+    })
+    ## save when user clicks
 
-          previousFilesAvailable <- eventReactive(input$refreshPreviousAnalysis, { #
-            selectInput(inputId=ns('previous_input'), label=NULL, choices=dir(file.path("R/outputs")), multiple = FALSE)
-          })
-          output$previous_input2 <- renderPrint({  previousFilesAvailable()    })
-          outLoad <- eventReactive(input$runLoadPrevious, {
-            # req(data())
-            req(input$previous_input)
-            shinybusy::show_modal_spinner('fading-circle', text = 'Processing...')
-            ## replace tables
-            tmp <- data() # current or empty dataset
-            load(file.path(getwd(),res_auth$repository,input$previous_input)) # old dataset
-            tmp$data <- result$data
-            tmp$metadata <- result$metadata
-            tmp$modifications <- result$modifications
-            tmp$predictions <- result$predictions
-            tmp$metrics <- result$metrics
-            tmp$modeling <- result$modeling
-            tmp$status <- result$status
-            data(tmp) # update data with results
-            shinybusy::remove_modal_spinner()
-            cat(paste("Dataset:",input$previous_input,"loaded successfully."))
-          }) ## end eventReactive
-          output$outLoad <- renderPrint({
-            outLoad()
-          })
-        }else if(input$previous_object_input == 'pcfile'){ # upload rds
-          outLoad2 <- eventReactive(input$previous_object_file, {
-            req(input$previous_object_file)
-            load(input$previous_object_file$datapath)
-            tmp <- data()
-            tmp$data <- result$data
-            tmp$metadata <- result$metadata
-            tmp$modifications <- result$modifications
-            tmp$predictions <- result$predictions
-            tmp$metrics <- result$metrics
-            tmp$modeling <- result$modeling
-            tmp$status <- result$status
-            data(tmp) # update data with results
-            cat(paste("Dataset","loaded successfully."))
-          }) ## end eventReactive
-          output$outLoad2 <- renderPrint({
-            outLoad2()
-          })
+    outgetWeather <- eventReactive(input$rungetWeather, {
+
+      req(data())
+      if(is.null(data())){
+        cat( "Please retrieve or load your phenotypic data using the 'Data Retrieval' tab.")
+      }else{ # data is there
+        ## pheno check
+        shinybusy::show_modal_spinner('fading-circle', text = 'Processing...')
+        xx <- dataWeather()
+        # save(xx, file="xx.RData")
+        howManyProvidede <- apply(xx,1,function(x){length(which(is.na(x)))/length(x)})
+        if( length(which(howManyProvidede != 0)) > 0  ){ # the user has not provided any full information for any field
+          cat( "Please fill the 4 fields required for at least one environment to extract weather data.")
         }else{
-
+          result <- data()
+          weather <- cgiarPipeline::nasaPowerExtraction(LAT=xx$latitude,LONG=xx$longitude,
+                                                        date_planted=xx$plantingDate,
+                                                        date_harvest=xx$harvestingDate,
+                                                        environments=xx$environment,
+                                                        temporal=input$temporal
+          )
+          result$data$weather <- weather$WTH
+          result$metadata$weather <- unique(rbind(result$metadata$weather, weather$descriptive))
+          data(result)
+          cat(paste("Weather data saved succesfully."))
         }
+        shinybusy::remove_modal_spinner()
       }
-    )
 
+    })
+    output$outgetWeather <- renderPrint({
+      outgetWeather()
+    })
     ### Control Nex/Back buttons ###############################################
 
     back_bn  <- actionButton(ns('prev_tab'), 'Back')
@@ -1648,8 +1963,17 @@ hapMapChar2NumericDouble <- function(hapMap) {
   missingData=c("NN","FAIL","FAILED","Uncallable","Unused","NA","",-9)
   for(iMiss in missingData){hapMap[which(hapMap==iMiss, arr.ind = TRUE)] <- NA}
   # convert the hapMap to numeric
-  hapMapNumeric <- sommer::atcg1234(t(hapMap), maf = -1, imp = FALSE)
+  Mprov <- t(hapMap); colnames(Mprov) <- SNPInfo[,1]
+  hapMapNumeric <- sommer::atcg1234(Mprov, maf = -1, imp = FALSE)
 
+  multiAllelic <- setdiff(SNPInfo$`rs#`,colnames(hapMapNumeric$M))
+  if(length(multiAllelic) > 0){
+    addMulti <- matrix(NA,nrow=nrow(hapMapNumeric$M),ncol=length(multiAllelic))
+    addMultiRef <- matrix(NA,nrow=2,ncol=length(multiAllelic))
+    colnames(addMulti) <- colnames(addMultiRef) <- multiAllelic
+    hapMapNumeric$M <- cbind(hapMapNumeric$M, addMulti)
+    hapMapNumeric$ref.alleles <- cbind(hapMapNumeric$ref.alleles, addMultiRef)
+  }
   # convert to data frame
   refAlleles <- hapMapNumeric$ref.alleles
 

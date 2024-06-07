@@ -11,29 +11,16 @@ mod_singleCrossGenoApp_ui <- function(id){
   ns <- NS(id)
   tagList(
 
-
-    shiny::sidebarPanel(#width = 3,
-      width = 3,
-      tags$style(".well {background-color:grey; color: #FFFFFF;}"),
-      HTML("<img src='www/cgiar3.png' width='42' vspace='10' hspace='10' height='46' align='top'>
-                  <font size='5'>Single-Cross Marker Building</font>"),
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-      numericInput(ns("hybridBatch"), label = "Batch size to compute", value = 1000, min=1, max=10000, step=1000),
-      selectInput(ns("checkboxAllHybrids"), label = "Compute all possible hybrids?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE),
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-      actionButton(ns("runScr"), "Build matrix", icon = icon("play-circle")),
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-      textOutput(ns("outScr"))
-    ), # end sidebarpanel
-    shiny::mainPanel(width = 9,
+    shiny::mainPanel(width = 12,
                      tabsetPanel( #width=9,
                        type = "tabs",
 
-                       tabPanel(p("Information",class="info-p"), icon = icon("book"),
+                       tabPanel( div(icon("book"), "Information-SCM") ,
                                 br(),
                                 shinydashboard::box(status="success",width = 12,
                                                     solidHeader = TRUE,
-                                                    column(width=12,   style = "height:800px; overflow-y: scroll;overflow-x: scroll;",
+                                                    column(width=12,   style = "height:580px; overflow-y: scroll;overflow-x: scroll;",
+                                                           h1(strong(span("Single Cross Marker Matrix Build", style="color:green"))),
                                                            h2(strong("Status:")),
                                                            uiOutput(ns("warningMessage")),
                                                            tags$body(
@@ -45,8 +32,8 @@ mod_singleCrossGenoApp_ui <- function(id){
                                                              # img(src = "www/qaRaw.png", height = 300, width = 600), # add an image
                                                              p(strong("Batch size to compute-")," the number of hybrids to build in each batch. Building all hybrids at once can be computationally
                                                                intensive and unnecesary. The default value is 1000 hybrids per batch."),
-                                                             p(strong("Compute all possible hybrids?-")," an indication if only the hybrids present in the phenotypic dataset should be computed or
-                                                               all possible marker cross combinations should be created."),
+                                                             p(strong("Compute all possible hybrids?-")," an indication to know if only the marker-profiles for the hybrids present in the phenotypic dataset should be computed or
+                                                               marker-profiles for all cross combinations should be created. This should be used carefully when the number of males and females in the pedigree file is big."),
                                                              h2(strong("References")),
                                                              p("Nishio M and Satoh M. 2014. Including Dominance Effects in the Genomic BLUP Method for Genomic Evaluation. Plos One 9(1), doi:10.1371/journal.pone.0085792"),
                                                              p("Su G, Christensen OF, Ostersen T, Henryon M, Lund MS. 2012. Estimating Additive and Non-Additive Genetic Variances and Predicting Genetic Merits Using Genome-Wide Dense Single Nucleotide Polymorphism Markers. PLoS ONE 7(9): e45293. doi:10.1371/journal.pone.0045293"),
@@ -58,27 +45,39 @@ mod_singleCrossGenoApp_ui <- function(id){
                                                     )
                                 )
                        ),
-                       tabPanel(p("Output", class="output-p"), icon = icon("arrow-right-from-bracket"),
+                       tabPanel(div(icon("arrow-right-to-bracket"), "Input"),
                                 tabsetPanel(
-                                  tabPanel("Summaries", icon = icon("magnifying-glass-chart"),
+                                  tabPanel("Pick batch size", icon = icon("magnifying-glass-chart"),
                                            br(),
-                                           shinydashboard::box(status="success",width = 12, #background = "green", solidHeader = TRUE,
-                                                               column(width=12,DT::DTOutput(ns("summariesScr")),style = "height:800px; overflow-y: scroll;overflow-x: scroll;")
+                                           column(width=12, numericInput(ns("hybridBatch"), label = "Batch size to compute", value = 1000, min=1, max=10000, step=1000), style = "background-color:grey; color: #FFFFFF"),
+                                           h5(strong(span("Visualizations below are only there to help you pick the right parameter values in the upper grey boxes. Please inspect them prior to run.", style="color:green"))),
+                                           hr(style = "border-top: 3px solid #4c4c4c;"),
+                                           shinydashboard::box(status="success",width = 12, solidHeader = TRUE, #background = "green",
+                                                               column(width=12, style = "height:530px; overflow-y: scroll;overflow-x: scroll;",
+                                                                      DT::DTOutput(ns("summariesScr")),
+                                                                      )
                                            )
                                   ),
-                                  tabPanel("Crosses", icon = icon("magnifying-glass-chart"),
+                                  tabPanel("Pick crosses", icon = icon("magnifying-glass-chart"),
                                            br(),
-                                           shinydashboard::box(status="success",width = 12, #background = "green", solidHeader = TRUE,
+                                           column(width=12, selectInput(ns("checkboxAllHybrids"), label = "Compute all possible hybrids?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE), style = "background-color:grey; color: #FFFFFF"),
+                                           h5(strong(span("Visualizations below are only there to help you pick the right parameter values in the upper grey boxes. Please inspect them prior to run.", style="color:green"))),
+                                           hr(style = "border-top: 3px solid #4c4c4c;"),
+                                           shinydashboard::box(status="success",width = 12,  solidHeader = TRUE, #background = "green",
                                                                column(width = 6, sliderInput(ns("slider1"), label = "Number of mothers", min = 1, max = 500, value = c(1, 15))  ),
                                                                column(width = 6, sliderInput(ns("slider2"), label = "Number of fathers", min = 1, max = 500, value = c(1, 15))  ),
-                                                               column(width=6, shiny::plotOutput(ns("plotPossibleCrosses")) ),
-                                                               column(width=6, shiny::plotOutput(ns("plotPossibleProfiles")) )
+                                                               column(width=6, shiny::plotOutput(ns("plotPossibleCrosses")),style = "height:460px; overflow-y: scroll;overflow-x: scroll;" ),
+                                                               column(width=6, shiny::plotOutput(ns("plotPossibleProfiles")),style = "height:460px; overflow-y: scroll;overflow-x: scroll;" )
                                            )
-                                  )
-                                ) # end of tabset
-                       )# end of output panel
+                                  ),
+                                  tabPanel("Run analysis", icon = icon("play"),
+                                           br(),
+                                           actionButton(ns("runScr"), "Build matrix", icon = icon("play-circle")),
+                                           textOutput(ns("outScr"))
+                                  ),
+                                ), # end of tabset
+                       ),# end of output panel
                      )) # end mainpanel
-
 
 
   )
@@ -101,32 +100,32 @@ mod_singleCrossGenoApp_server <- function(id, data){
     # warning message
     output$warningMessage <- renderUI(
       if(is.null(data())){
-        HTML( as.character(div(style="color: red; font-size: 20px;", "Please retrieve or load your phenotypic data using the 'Data Retrieval' tab.")) )
+        HTML( as.character(div(style="color: red; font-size: 20px;", "Please retrieve or load your phenotypic data using the 'Data Retrieval' tab. We will need it to know which single crosses from all the possible ones should be computed.")) )
       }else{ # data is there
         ## pheno check
         if( length(which(c("designation") %in% data()$metadata$pheno$parameter)) == 0 ){
-          HTML( as.character(div(style="color: red; font-size: 20px;", "Please map your 'designation' column using the 'Data Retrieval' tab in the 'Phenotype' section.")) )
+          HTML( as.character(div(style="color: red; font-size: 20px;", "Please map your 'designation' column using the 'Data Retrieval' tab in the 'Phenotype' section. We need this information to know which hybrids have been tested.")) )
         }else{
           ## ped check
           ped <- data()$data$pedigree
           metaPed <- data()$metadata$pedigree
           if(is.null(ped)){ # no pedigree available
-            HTML( as.character(div(style="color: red; font-size: 20px;", "Please retrieve or load your pedigree data using the 'Data Retrieval' tab under 'Pedigree' section.")) )
+            HTML( as.character(div(style="color: red; font-size: 20px;", "Please retrieve or load your pedigree data using the 'Data Retrieval' tab under 'Pedigree' section. We need this information to know which hybrid combinations are available and which ones need to be built.")) )
           }else{ # pedigree is there
             if( length(intersect(metaPed$value , colnames(ped))) != 3){
-              HTML( as.character(div(style="color: red; font-size: 20px;", "Please map your 'designation', 'mother', and 'father' columns when retrieving the pedigree data.")) )
+              HTML( as.character(div(style="color: red; font-size: 20px;", "Please map your 'designation', 'mother', and 'father' columns when retrieving the pedigree data. We need this information to know which hybrid combinations are available and which ones need to be built.")) )
             }else{
               colnames(ped) <- cgiarBase::replaceValues(colnames(ped), Search = metaPed$value, Replace = metaPed$parameter )
               parents <- na.omit(c(unique(ped[,"mother"]), unique(ped[,"father"]) ))
               if(length(parents) == 0){
-                HTML( as.character(div(style="color: red; font-size: 20px;", "Please retrieve or load your pedigree data using the 'Data Retrieval' tab. No parents detected.")) )
+                HTML( as.character(div(style="color: red; font-size: 20px;", "Please retrieve or load your pedigree data using the 'Data Retrieval' tab. No parents detected. We need this information to know which hybrid combinations are available and which ones need to be built.")) )
               }else{
                 ## marker check
                 geno <- data()$data$geno
                 if(is.null(geno)){ # no markers available
                   HTML( as.character(div(style="color: red; font-size: 20px;", "Please retrieve or load your marker data using the 'Data Retrieval' tab.")) )
                 }else{ # markers are there
-                  HTML( as.character(div(style="color: green; font-size: 20px;", "Data is complete, please proceed to inspect the options.")) )
+                  HTML( as.character(div(style="color: green; font-size: 20px;", "Data is complete, please proceed to perform your analysis.")) )
                 } # end of if pedigree available
               } #
             }

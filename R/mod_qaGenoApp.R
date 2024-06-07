@@ -11,80 +11,95 @@ mod_qaGenoApp_ui <- function(id){
   ns <- NS(id)
   tagList(
 
-
-    # input <- list(propNaUpperThreshForMarker=0.3,propNaUpperThreshForInds=0.3,maf=0.5,imputationMethod="median", ploidy=2 )
-    shiny::sidebarPanel(#width = 3,
-      width = 3,
-      tags$style(".well {background-color:grey; color: #FFFFFF;}"),
-      # div(tags$p( h4(strong("Quality Assurance for Genetic Markers")))),#, style = "color: #817e7e"
-      HTML("<img src='www/cgiar3.png' width='42' vspace='10' hspace='10' height='46' align='top'>
-                  <font size='5'>Quality Assurance for Genetic Markers</font>"),
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-
-      numericInput(ns("propNaUpperThreshForMarker"), label = "Upper threshold for missing data in markers (> will be removed)", value = .2, step = .05, max = 1, min = 0),
-      numericInput(ns("propNaUpperThreshForInds"), label = "Upper threshold for missing data in individuals(> will be removed)", value = .2, step = .05, max = 1, min = 0),
-      numericInput(ns("maf"), label = "Upper threshold for minor allele frequency (< will be removed)", value = 0, step = .05, max = 1, min = 0),
-      numericInput(ns("propHetUpperThreshForMarker"), label = "Upper threshold for heterozygosity in markers (> will be removed)", value = 1, step = .05, max = 1, min = 0),
-      numericInput(ns("propFisUpperThreshForMarker"), label = "Upper threshold for inbreeding in markers (> will be removed)", value = 1, step = .05, max = 1, min = 0),
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-      shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Settings...",
-                          selectInput(ns("imputationMethod"), "Imputation method", choices = c("median"), multiple = FALSE),
-                          numericInput(ns("ploidy"), label = "Ploidy", value = 2, step=2, max = 10, min=2)
-      ),
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-      actionButton(ns("runQaMb"), "Save modifications", icon = icon("play-circle")),
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-      textOutput(ns("outQaMb"))
-    ), # end sidebarpanel
-    shiny::mainPanel(width = 9,
-                     tabsetPanel( #width=9,
-                       type = "tabs",
-                       tabPanel(p("Information",class="info-p"),  icon = icon("book"),
-                                br(),
-                                shinydashboard::box(status="success",width = 12,
-                                                    solidHeader = TRUE,
-                                                    column(width=12,   style = "height:800px; overflow-y: scroll;overflow-x: scroll;",
-                                                           tags$body(
-                                                             h2(strong("Status:")),
-                                                             uiOutput(ns("warningMessage")),
-                                                             h2(strong("Details")),
-                                                             p("When genetic evaluation is carried using genomic data, we need to ensure the quality of genetic markers.
+    shiny::mainPanel(width = 12,
+                     tabsetPanel( id=ns("tabsMain"),
+                                  type = "tabs",
+                                  tabPanel(div(icon("book"), "Information-QA-Geno") ,
+                                           br(),
+                                           shinydashboard::box(status="success",width = 12,
+                                                               solidHeader = TRUE,
+                                                               column(width=12,   style = "height:580px; overflow-y: scroll;overflow-x: scroll;",
+                                                                      tags$body(
+                                                                        column(width = 6,
+                                                                               h1(strong(span("QA for genetic markers", style="color:green"))),
+                                                                               h2(strong("Status:")),
+                                                                               uiOutput(ns("warningMessage")),
+                                                                               img(src = "www/qaGeno.png", height = 300, width = 650), # add an image
+                                                                        ),
+                                                                        column(width = 6, shiny::plotOutput(ns("plotDataDependencies")), ),
+                                                                        column(width = 12,
+                                                                               h2(strong("Details")),
+                                                                               p("When genetic evaluation is carried using genomic data, we need to ensure the quality of genetic markers.
                                                              This option aims to allow users to identify bad markers or individuals given certain QA parameters.
                                 The way arguments are used is the following:"),
-                                                             img(src = "www/qaGeno.png", height = 300, width = 650), # add an image
-                                                             p(strong("Threshold for missing data in markers.-")," this sets a threshold for how much missing data in a marker is allowed. Any marker with more than this value will be marked as a column to be removed in posterior analyses. Value between 0 and 1."),
-                                                             p(strong("Threshold for missing data in individuals.-"),"  this sets a threshold for how much missing data in an individual is allowed. Any individual with more than this value it will be marked as a row to be removed in posterior analyses. Value between 0 and 1."),
-                                                             p(strong("Minor allele frequency.-")," this sets a lower threshold for what is the minimum allele frequency allowed in the dataset. If lower than this value it will be marked as a column to be removed in posterior analyses. Value between 0 and 1."),
-                                                             p(strong("Threshold for heterozygosity in markers.-")," this sets an upper threshold for what is the maximum level of heterozygosity allowed in the markers. If greater than this value it will be marked as a column to be removed in posterior analyses. Value between 0 and 1. For example, a line dataset should not have markers with high heterozigosity."),
-                                                             p(strong("Threshold for inbreeding in markers.-")," this sets an upper threshold for what is the maximum level of inbreeding allowed in the markers. If lower than this value it will be marked as a column to be removed in posterior analyses. Value between 0 and 1."),
-                                                             p(strong("Imputation method.-")," method to impute missing cells. Median is the only method currently available."),
-                                                             p(strong("Ploidy.-")," number of chromosome copies. This value is important to compute some of the paramters. Default is 2 or diploid."),
-                                                             h2(strong("References")),
-                                                             p("Tukey, J. W. (1977). Exploratory Data Analysis. Section 2C."),
-                                                             p("Velleman, P. F. and Hoaglin, D. C. (1981). Applications, Basics and Computing of Exploratory Data Analysis. Duxbury Press.")
-                                                           )
-                                                    ),
 
-                                )
-                       ),
-                       tabPanel(p("Output",class="output-p"), icon = icon("arrow-right-from-bracket"),
-                                tabsetPanel(
-                                  tabPanel("Outlier detection", icon = icon("magnifying-glass-chart"),
-                                           br(),
-                                           shinydashboard::box(status="success",width = 12,
-                                                               solidHeader = TRUE,
-                                                               plotly::plotlyOutput(ns("plotPredictionsCleanOutMarker"))
+                                                                               p(strong("Threshold for missing data in markers.-")," this sets a threshold for how much missing data in a marker is allowed. Any marker with more than this value will be marked as a column to be removed in posterior analyses. Value between 0 and 1."),
+                                                                               p(strong("Threshold for missing data in individuals.-"),"  this sets a threshold for how much missing data in an individual is allowed. Any individual with more than this value it will be marked as a row to be removed in posterior analyses. Value between 0 and 1."),
+                                                                               p(strong("Minor allele frequency.-")," this sets a lower threshold for what is the minimum allele frequency allowed in the dataset. If lower than this value it will be marked as a column to be removed in posterior analyses. Value between 0 and 1."),
+                                                                               p(strong("Threshold for heterozygosity in markers.-")," this sets an upper threshold for what is the maximum level of heterozygosity allowed in the markers. If greater than this value it will be marked as a column to be removed in posterior analyses. Value between 0 and 1. For example, a line dataset should not have markers with high heterozigosity."),
+                                                                               p(strong("Threshold for inbreeding in markers.-")," this sets an upper threshold for what is the maximum level of inbreeding allowed in the markers. If lower than this value it will be marked as a column to be removed in posterior analyses. Value between 0 and 1."),
+                                                                               p(strong("Additional settings:")),
+                                                                               p(strong("Imputation method.-")," method to impute missing cells. Median is the only method currently available."),
+                                                                               p(strong("Ploidy.-")," number of chromosome copies. This value is important to compute some of the paramters. Default is 2 or diploid."),
+                                                                               h2(strong("References")),
+                                                                               p("Tukey, J. W. (1977). Exploratory Data Analysis. Section 2C."),
+                                                                               p("Velleman, P. F. and Hoaglin, D. C. (1981). Applications, Basics and Computing of Exploratory Data Analysis. Duxbury Press.")
+                                                                        ),
+                                                                      )
+                                                               ),
+
                                            )
                                   ),
-                                  tabPanel("Modifications", icon = icon("table"),
-                                           br(),
-                                           shinydashboard::box(status="success",width = 12,
-                                                               solidHeader = TRUE,
-                                                               column(width=12,DT::DTOutput(ns("modificationsQaMarker")),style = "height:800px; overflow-y: scroll;overflow-x: scroll;")
-                                           )
-                                  )
-                                ) # end of tabset
-                       )# end of output panel
+                                  tabPanel(div(icon("arrow-right-to-bracket"), "Input"),
+                                           tabsetPanel(
+                                             tabPanel("Set thresholds", icon = icon("magnifying-glass-chart"),
+                                                      br(),
+                                                      column(width=12, style = "background-color:grey; color: #FFFFFF",
+                                                             column(width=4, numericInput(ns("propNaUpperThreshForMarker"), label = "Upper threshold for missing data in markers (> will be removed)", value = .4, step = .05, max = 1, min = 0) ),
+                                                             column(width=4, numericInput(ns("propNaUpperThreshForInds"), label = "Upper threshold for missing data in individuals(> will be removed)", value = .4, step = .05, max = 1, min = 0) ),
+                                                             column(width=4, numericInput(ns("maf"), label = "Upper threshold for minor allele frequency (< will be removed)", value = 0, step = .05, max = 1, min = 0) ),
+                                                             column(width=4, numericInput(ns("propHetUpperThreshForMarker"), label = "Upper threshold for heterozygosity in markers (> will be removed)", value = 1, step = .05, max = 1, min = 0) ),
+                                                             column(width=4, numericInput(ns("propFisUpperThreshForMarker"), label = "Upper threshold for inbreeding in markers (> will be removed)", value = 1, step = .05, max = 1, min = 0) ),
+                                                      ),
+                                                      column(width=12,
+                                                             hr(style = "border-top: 3px solid #4c4c4c;"),
+                                                             h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
+                                                             hr(style = "border-top: 3px solid #4c4c4c;"),
+                                                      ),
+                                                      shinydashboard::box(status="success",width = 12,
+                                                                          solidHeader = TRUE,
+                                                                          column(width=12, style = "height:440px; overflow-y: scroll;overflow-x: scroll;",
+                                                                                 p(span("Preview of the proportion of markers or individuals tagged for the different QA parameters.", style="color:black")),
+                                                                                 plotly::plotlyOutput(ns("plotPredictionsCleanOutMarker")) ,
+                                                                                 p(span("Number of individuals and markers available in the dataset.", style="color:black")),
+                                                                                 DT::DTOutput(ns("summariesGeno")),
+                                                                                 p(span("Preview of potential modifications to add.", style="color:black")),
+                                                                                 DT::DTOutput(ns("modificationsQaMarker")),
+                                                                                 shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Additional run settings...",
+                                                                                                     selectInput(ns("imputationMethod"), "Imputation method", choices = c("median"), multiple = FALSE),
+                                                                                                     numericInput(ns("ploidy"), label = "Ploidy", value = 2, step=2, max = 10, min=2)
+                                                                                 ),
+                                                                          ),
+                                                      )
+                                             ),
+                                             tabPanel("Run analysis", icon = icon("play"),
+                                                      br(),
+                                                      actionButton(ns("runQaMb"), "Identify & store modifications", icon = icon("play-circle")),
+                                                      textOutput(ns("outQaMb")),
+                                             ),
+                                           ) # end of tabset
+                                  ),# end of output panel
+                                  tabPanel(div(icon("arrow-right-from-bracket"), "Output" ) , value = "outputTabs",
+                                           tabsetPanel(
+                                             tabPanel("Report", icon = icon("file-image"),
+                                                      br(),
+                                                      div(tags$p("Please download the report below:") ),
+                                                      downloadButton(ns("downloadReportQaGeno"), "Download report"),
+                                                      br(),
+                                                      uiOutput(ns('reportQaGeno'))
+                                             ),
+                                           ),
+                                  ),
                      )) # end mainpanel
 
 
@@ -98,26 +113,20 @@ mod_qaGenoApp_server <- function(id, data){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
-
+    output$plotDataDependencies <- shiny::renderPlot({ dependencyPlot() })
     ############################################################################ clear the console
     hideAll <- reactiveValues(clearAll = TRUE)
     observeEvent(data(), {
       hideAll$clearAll <- TRUE
     })
     ############################################################################
-
-    # data = reactive({ # provisional dataset for testing
-    #   load("dataStr0.RData")
-    #   data <- res
-    #   return(data)
-    # })
     # warning message
     output$warningMessage <- renderUI(
       if(is.null(data())){
         HTML( as.character(div(style="color: red; font-size: 20px;", "Please retrieve or load your data using the 'Data' tab.")) )
       }else{ # data is there
         if(!is.null(data()$data$geno)){
-          HTML( as.character(div(style="color: green; font-size: 20px;", "Data is complete, please proceed to perform the marker QA inspecting the other tabs.")) )
+          HTML( as.character(div(style="color: green; font-size: 20px;", "Data is complete, please proceed to perform the marker QA specifying your input parameters under the Input tabs.")) )
         }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please retrieve or load your genotype data using the 'Data' tab. ")) )}
       }
     )
@@ -186,6 +195,21 @@ mod_qaGenoApp_server <- function(id, data){
 
     })
 
+    ## summaries geno
+    output$summariesGeno <-  DT::renderDT({
+      req(data())
+
+      if(!is.null(data()$data$geno)){
+        mo <- data.frame(nInds=nrow(data()$data$geno), nMarkers=ncol(data()$data$geno)); rownames(mo) <- "summary"
+      }else{
+        mo <- data.frame(warningText="Genetic marker data not available")
+      }
+      DT::datatable(mo, extensions = 'Buttons',
+                    options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                   lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+      )
+
+    })
     ## display the current outliers
     observeEvent(data(),{
 
@@ -235,10 +259,45 @@ mod_qaGenoApp_server <- function(id, data){
         result$status <- rbind(result$status, newStatus)
         data(result)
         cat(paste("Modifications to genotype information saved with id:",as.POSIXct( mods$analysisId[nrow(mods)], origin="1970-01-01", tz="GMT") ))
+        updateTabsetPanel(session, "tabsMain", selected = "outputTabs")
       }else{
         cat("No modifications to add.")
       }
       shinybusy::remove_modal_spinner()
+
+      if(nrow(mods) > 0) { # if all goes well in the run
+        # ## Report tab
+        output$reportQaGeno <- renderUI({
+          HTML(markdown::markdownToHTML(knitr::knit(system.file("rmd","reportQaGeno.Rmd",package="bioflow"), quiet = TRUE), fragment.only=TRUE))
+        })
+
+        output$downloadReportQaGeno <- downloadHandler(
+          filename = function() {
+            paste('my-report', sep = '.', switch(
+              "HTML", PDF = 'pdf', HTML = 'html', Word = 'docx'
+            ))
+          },
+          content = function(file) {
+            src <- normalizePath(system.file("rmd","reportQaGeno.Rmd",package="bioflow"))
+            src2 <- normalizePath('data/resultQaGeno.RData')
+            # temporarily switch to the temp dir, in case you do not have write
+            # permission to the current working directory
+            owd <- setwd(tempdir())
+            on.exit(setwd(owd))
+            file.copy(src, 'report.Rmd', overwrite = TRUE)
+            file.copy(src2, 'resultQaGeno.RData', overwrite = TRUE)
+            out <- rmarkdown::render('report.Rmd', params = list(toDownload=TRUE),switch(
+              "HTML",
+              HTML = rmarkdown::html_document()
+            ))
+            file.rename(out, file)
+          }
+        )
+
+      }else{ hideAll$clearAll <- TRUE}
+
+      hideAll$clearAll <- FALSE
+
     })
     output$outQaMb <- renderPrint({
       outQaMb()

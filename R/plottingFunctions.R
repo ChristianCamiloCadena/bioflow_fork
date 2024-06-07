@@ -1,70 +1,222 @@
-gr_np<-function(object){
+goodLevels <- function(object, analysisId){
+  '%!in%' <- function(x,y)!('%in%'(x,y))
+  metaPheno <- object$metadata$pheno
+  predictions <- object$predictions[which(object$predictions$analysisId == analysisId ),]
+  # add missing columns
+  keep <- which(metaPheno$parameter %!in% c("trait","designation","environment","rep","row","col","iBlock") )
+  if(length(keep) > 0){
+    toExtractFromData <- metaPheno[keep, "value"]
+    tpe <- unique(object$data$pheno[,c("environment",toExtractFromData)])
+    colnames(tpe) <- cgiarBase::replaceValues(colnames(tpe), Search = metaPheno$value, Replace = metaPheno$parameter )
+    predictions <- merge(predictions, tpe, by="environment", all.x = TRUE)
+  }
+  # add missing weather
+  weather <- object$metadata$weather
+  if(!is.null(weather)){
+    weather$traitParameter <- paste(weather$trait, weather$parameter, sep="_")
+    wide <- reshape(weather[,-which(colnames(weather)%in%c("trait","parameter"))], direction = "wide", idvar = "environment",
+                    timevar = c("traitParameter"), v.names = "value", sep= "_")
+    colnames(wide) <- gsub("value_","",colnames(wide))
+    predictions <- merge(predictions, wide, by="environment", all.x = TRUE)
+  }
+  # extract
+  availableTraits <- metaPheno[which(metaPheno$parameter %in% c("trait")),"value"]
+  factorPerTrait <- vector(mode="list", length = length(availableTraits)); names(factorPerTrait) <- availableTraits
+  availableFactors <- metaPheno[which(metaPheno$parameter %in% c("environment","year","season","location","trial","study","management")),"parameter"]
 
-  WTH <- object$WTH
-
-  # Time series  --------------------------------------------------------
-  TS_RH <-WTH %>%
-    dplyr::select(date,RH2M) %>%
-    group_by(date) %>%
-    dplyr::summarise(RH=mean(RH2M),
-                     n()) %>%
-    plot_ly(type = 'scatter', mode = 'lines',
-            width = 900,height = 450)%>%
-    add_trace(x = ~date, y = ~RH,name="R.H.")%>%
-    layout(showlegend = F) %>%
-    layout(
-      xaxis = list(zerolinecolor = '#ffff',
-                   zerolinewidth = 2,
-                   gridcolor = 'ffff',title = 'Period between Planting and Harvesting'),
-      yaxis = list(zerolinecolor = '#ffff',
-                   zerolinewidth = 2,
-                   gridcolor = 'ffff',title = 'Realtive Humidity'),
-      plot_bgcolor='#e5ecf6') #
-  #TS_RH
-
-  TS_TM <-WTH %>% dplyr::select(date,T2M)%>%
-    group_by(date) %>%
-    dplyr::summarise(TM=mean(T2M),
-                     n()) %>%
-    plot_ly(type = 'scatter', mode = 'lines',
-            width = 900,height = 450)%>%
-    add_trace(x = ~date, y = ~TM,name="°C")%>%
-    layout(showlegend = F) %>%
-    layout(
-      xaxis = list(zerolinecolor = '#ffff',
-                   zerolinewidth = 2,
-                   gridcolor = 'ffff',title = 'Period between Planting and Harvesting'),
-      yaxis = list(zerolinecolor = '#ffff',
-                   zerolinewidth = 2,
-                   gridcolor = 'ffff',title = 'Temperature (°C)'),
-      plot_bgcolor='#e5ecf6')
-
-
-  TS_PPT<-WTH %>% dplyr::select(date,PRECTOTCORR) %>%
-    group_by(date) %>%
-    dplyr::summarise(PPT=mean(PRECTOTCORR),
-                     n()) %>%
-    plot_ly(type = 'scatter', mode = 'lines',
-            width = 900,height = 450)%>%
-    add_trace(x = ~date, y = ~PPT,name="PPT")%>%
-    layout(showlegend = F) %>%
-    layout(
-      xaxis = list(zerolinecolor = '#ffff',
-                   zerolinewidth = 2,
-                   gridcolor = 'ffff',title = 'Period between Planting and Harvesting'),
-      yaxis = list(zerolinecolor = '#ffff',
-                   zerolinewidth = 2,
-                   gridcolor = 'ffff',title = 'Precipitation (mm)'),
-      plot_bgcolor='#e5ecf6')
-  # Outputs -----------------------------------------------------------------
-  output<- list(TS_RH = TS_RH,
-                TS_TM = TS_TM,
-                TS_PPT = TS_PPT)
-  return(output)
-
+  for(iTrait in availableTraits){ # iTrait = availableTraits[1]
+    provPred <- predictions[which(predictions$trait == iTrait),]
+    provPred <- provPred[which(!is.na(provPred$predictedValue)),]
+    for(iFactor in availableFactors){ # iFactor = availableFactors[1]
+      if(length(na.omit(unique(provPred[,iFactor]))) > 1){factorPerTrait[[iTrait]] <- c(factorPerTrait[[iTrait]] , iFactor)}
+    }
+  }
+  return(factorPerTrait)
 }
+
+formLme4 <- function(input0,object, analysisId){
+  # if(is.null(metaPheno)){stop("Metadata for phenotypes needs to be provided.", call. = FALSE)}
+  metaPheno <- object$metadata$pheno
+  weather <- object$metadata$weather
+  predictions <- object$predictions[which(object$predictions$analysisId == analysisId ),]
+  '%!in%' <- function(x,y)!('%in%'(x,y))
+  if(!is.null(weather)){
+    weather$traitParameter <- paste(weather$trait, weather$parameter, sep="_")
+    wide <- reshape(weather[,-which(colnames(weather)%in%c("trait","parameter"))], direction = "wide", idvar = "environment",
+                    timevar = c("traitParameter"), v.names = "value", sep= "_")
+    colnames(wide) <- gsub("value_","",colnames(wide))
+    predictions <- merge(predictions, wide, by="environment", all.x = TRUE)
+  }
+  keep <- which(metaPheno$parameter %!in% c("trait","designation","environment","rep","row","col","iBlock") )
+  if(length(keep) > 0){
+    toExtractFromData <- metaPheno[keep, "value"]
+    tpe <- unique(object$data$pheno[,c("environment",toExtractFromData)])
+    colnames(tpe) <- replaceValues(colnames(tpe), Search = metaPheno$value, Replace = metaPheno$parameter )
+    predictions <- merge(predictions, tpe, by="environment", all.x = TRUE)
+  }
+  ## make the formula
+  formulas <- list()
+  for(i in 1:length(input0)){ # for each effect to fit
+    input <- input0[[i]]
+
+    if( is.null(input$left) ){
+
+      if(input$center == ""){ # fixed effect
+        if(is.null(input$right)){
+          warning(paste("The term",i, "will be ignored since it was misspecified. Empty intercept and empty slope"))
+        }else{
+          formulas[[i]] <- paste(input$right, collapse = ":")
+        }
+      }else{ # | or  ||
+        warning(paste("The term",i, "will be ignored since it was misspecified. Empty intercept but structure specified"))
+      }
+
+    }else if( length(input$left) == 1 ){ # only one term in the left side of the equation
+
+      if(input$left == "0"){ # invalid
+        warning(paste("The term",i, "will be ignored since it was misspecified. Empty in both sides of the equation"))
+      }else if(input$left == "1"){ # simple intercept
+        if(input$center == ""){
+          warning(paste("The term",i, "will be ignored since it was misspecified. Intercept specified but no structure specified"))
+        }else if(input$center == "||"){ # if user assigns 1 on intercept the structure can only be |
+          input$center <- "|"
+          warning(paste("The term",i, "will shift from || to | since it was misspecified."))
+        }else{ # |
+
+          newCol <- paste(input[["left"]], collapse = "_")
+          if(newCol == "1"){ # simple structure
+            formulas[[i]] <-  paste( "( ", newCol, input[["center"]], input[["right"]],")" )
+          }else{ # complex structure
+            if(input$nPC == 0){ # no FA
+              predictions[, newCol] <- apply( predictions[ , input[["left"]] ] , 1 , function(x){paste(na.omit(x), collapse = "-")}  )
+              predictions[ which(predictions[,newCol] == ""), newCol] <- NA
+              Z <- Matrix::sparse.model.matrix(as.formula(paste("~", newCol,"-1")), na.action = na.pass, data=predictions)
+              colnames(Z) <- gsub(newCol, "", colnames(Z))
+              for(j in 1:ncol(Z)){predictions[,colnames(Z)[j]] <- Z[,j]}
+              formulas[[i]] <-  paste( "( 0 +", paste(colnames(Z), collapse = " + "), input[["center"]], input[["right"]],")" )
+            }else{ # FA model
+              formulas[[i]] <-  paste( "( 0 +", paste(paste0("PC",1:input$nPC), collapse = " + "), input[["center"]], input[["right"]],")" )
+            }
+          }
+
+        }
+      }else{ # intercept with a factor column (just one)
+
+        if(input$center == ""){
+          warning(paste("The term",i, "will be ignored since it was misspecified. Intercept specified but no structure specified"))
+        }else{ # |
+          newCol <- paste(input[["left"]], collapse = "_")
+          if(newCol == "1"){ # simple structure
+            formulas[[i]] <-  paste( "( ", newCol, input[["center"]], input[["right"]],")" )
+          }else{ # complex structure
+            if(input$nPC == 0){ # no FA
+              predictions[, newCol] <- apply( predictions[ , input[["left"]], drop=FALSE ] , 1 , function(x){paste(na.omit(x), collapse = "-")}  )
+              predictions[ which(predictions[,newCol] == ""), newCol] <- NA
+
+              if(length(unique(na.omit(predictions[, newCol]))) > 1){
+                Z <- Matrix::sparse.model.matrix(as.formula(paste("~", newCol,"-1")), na.action = na.pass, data=predictions)
+                colnames(Z) <- gsub(newCol, "", colnames(Z))
+              }else{
+                Z <- Matrix::Matrix(1,ncol=1,nrow=nrow(predictions))
+                colnames(Z) <- unique(na.omit(predictions[, newCol]))
+              }
+              for(j in 1:ncol(Z)){predictions[,colnames(Z)[j]] <- Z[,j]}
+              formulas[[i]] <-  paste( "( 0 +", paste(colnames(Z), collapse = " + "), input[["center"]], input[["right"]],")" )
+
+            }else{ # FA model
+              formulas[[i]] <-  paste( "( 0 +", paste(paste0("PC",1:input$nPC), collapse = " + "), input[["center"]], input[["right"]],")" )
+            } # ond of nPC
+          } # end of complex structure
+        }# end of | structure
+
+      }
+
+    }else{ # multiple terms in the left side
+
+      if( length( setdiff( input$left, c("0","1")) ) == 0){ # misspecified
+        warning(paste("The term",i, "will be ignored since it was misspecified. Intercept 0 + 1 is not allowed"))
+      }else{
+        if(input$center == ""){
+          warning(paste("The term",i, "will be ignored since it was misspecified. Intercept specified but no structure specified"))
+        }else{ # || or  |
+
+          if(is.null(input$right)){ # no right side
+            warning(paste("The term",i, "will be ignored since it was misspecified. Intercept and structure specified but no right side"))
+          }else{
+            newCol <- paste( setdiff( input$left, c("0","1")) , collapse = "_")
+            if(newCol == "1"){ # simple structure
+              formulas[[i]] <-  paste( "( ", newCol, input[["center"]], input[["right"]],")" )
+            }else{ # complex structure
+              if(input$nPC == 0){ # no FA
+                predictions[, newCol] <- apply( predictions[ , setdiff( input$left, c("0","1")), drop=FALSE ] , 1 , function(x){paste(na.omit(x), collapse = "-")}  )
+                predictions[ which(predictions[,newCol] == ""), newCol] <- NA
+                if(length(unique(na.omit(predictions[, newCol]))) > 1){
+                  Z <- Matrix::sparse.model.matrix(as.formula(paste("~", newCol,"-1")), na.action = na.pass, data=predictions)
+                  colnames(Z) <- gsub(newCol, "", colnames(Z))
+                }else{
+                  Z <- Matrix::Matrix(1,ncol=1,nrow=nrow(predictions))
+                  colnames(Z) <- unique(na.omit(predictions[, newCol]))
+                }
+                for(j in 1:ncol(Z)){predictions[,colnames(Z)[j]] <- Z[,j]}
+                formulas[[i]] <-  paste( "( 0 +", paste(colnames(Z), collapse = " + "), input[["center"]], input[["right"]],")" )
+              }else{ # FA model
+                formulas[[i]] <-  paste( "( 0 +", paste(paste0("PC",1:input$nPC), collapse = " + "), input[["center"]], input[["right"]],")" )
+              } # ond of nPC
+            } # end of complex structure
+
+          }# end of right-side exist
+
+        } # end of | or ||
+      }# end of multiple terms in left side properly specified
+
+    }# end of multiple terms in the left side
+
+  } # end of for each effect
+  form <- paste( unique(unlist(formulas)), collapse = " + ")
+  return(list(form=form, predictions=predictions, input=input0))
+}
+
+dependencyPlot <- function(){
+  mm <- matrix(
+    NA, nrow = 5, ncol = 8
+  )
+  # colnames(mm) <- c("QA","STA","MTA","INDEX","OCS","RGG","PGG")
+  colnames(mm) <- c("Quality Assurance","Single Trial Analysis","Multi Trial Analysis","Selection Index","Optimal Cross Selection","Realized Genetic Gain","Predicted Genetic Gain", "Population Structure")
+  rownames(mm) <- c("QTL", "Weather","Pedigree", "Genotype", "Phenotype")
+  mm[5,] = c(2,2,2,2,2,2,2,0)
+  mm[4,] = c(1,0,1,0,2,0,0,2)
+  mm[3,] = c(1,0,1,0,2,2,2,0)
+  mm[2,] = c(0,0,1,0,0,0,0,0)
+  mm[1,] = c(0,0,1,0,0,0,0,0)
+  mydata4 <- cgiarBase::matToTab(mm, symmetric = FALSE)
+  mydata4$label <- ifelse( mydata4$Freq == 0, "-", ifelse(mydata4$Freq == 2, "Required", "Optional" ) )
+
+  p <- ggplot2::ggplot(data = mydata4, ggplot2::aes(Var2, Var1, fill = Freq))+
+    ggplot2::geom_tile(color = "black")+
+    ggplot2::scale_fill_gradient2(high = "#038542", mid = "aquamarine3", low = "white",
+                                  midpoint = 1, limit = c(0,2), space = "Lab",
+                                  name="Pearson\nCorrelation") +
+    ggplot2::theme_minimal()+
+    ggplot2::ylab("") + ggplot2::xlab("") +
+    ggplot2::coord_fixed() +
+    ggplot2::theme(strip.text.x = ggplot2::element_text(size=10, color="black"),
+                   axis.text.x = ggplot2::element_text(angle = 45, size=12, vjust=0.5,
+                                                       hjust=0.1, # this one control the top labels position
+                                                       lineheight=0.75 ),
+                   axis.text.y = ggplot2::element_text(size=12),
+                   legend.position = "none",
+                   plot.title = ggplot2::element_text(color="grey32", size=18, face="bold.italic") )  +
+    ggplot2::geom_text(ggplot2::aes(label = label ), color = "grey18", size = 3) +
+    ggplot2::ggtitle("Data dependencies across modules") +
+    ggplot2::scale_x_discrete(
+      position = "bottom",
+      guide = ggplot2::guide_axis(position = "top")
+    )
+  return(p)
+}
+
 plotDensitySelected <-  function(object,environmentPredictionsRadar2, traitFilterPredictionsRadar2, meanGroupPredictionsRadar, proportion=0.2,
-                                 analysisId, trait, desirev, scaled){
+                                 analysisId, trait, desirev, scaled, title=NULL){
 
   mydata <- object$predictions
   mydata <- mydata[which(mydata$analysisId == analysisId),]
@@ -115,13 +267,17 @@ plotDensitySelected <-  function(object,environmentPredictionsRadar2, traitFilte
       ggplot2::facet_wrap(~trait, ncol=3, scales = "free") +
       ggplot2::geom_vline(data = mm, ggplot2::aes(xintercept = predictedValue), linetype="dotdash", col="red")
   }
-  fig2 <-  plotly::ggplotly(p)
-  fig2
+  if(!is.null(title)){
+    p <- p + ggplot2::ggtitle(title)
+  }
+  # fig2 <-  plotly::ggplotly(p)
+  # fig2
+  p
 
 }
 
 radarPlot <-  function(mydata, environmentPredictionsRadar2=NULL,traitFilterPredictionsRadar2=NULL,proportion=NULL,meanGroupPredictionsRadar=NULL,
-                       fontSizeRadar=12, r0Radar=NULL, neRadar=NULL, plotSdRadar=FALSE){
+                       fontSizeRadar=12, r0Radar=NULL, neRadar=NULL, plotSdRadar=FALSE, title=NULL){
 
 
   mydata = mydata[which( (mydata$environment %in% environmentPredictionsRadar2) &
@@ -204,6 +360,9 @@ radarPlot <-  function(mydata, environmentPredictionsRadar2=NULL,traitFilterPred
           )
       }
     }
+    if(!is.null(title)){
+      fig <- fig %>% plotly::layout(title=title)
+    }
     return(fig)
   }
 
@@ -247,7 +406,8 @@ corPlotPredictions <- function(predictions, traitPredictionsCorrelation=NULL, un
     }
 
     fig <-  plotly::plot_ly(mydata4, x = mydata4[,"X1"], y = mydata4[,"X2"], z = mydata4[,"Freq"],
-                            color = mydata4[,"Freq"], text=mydata4[,"mytext"], colors = c('#BF382A', '#0C4B8E'))
+                            color = mydata4[,"Freq"], #text=mydata4[,"mytext"],
+                            colors = c('#BF382A', '#0C4B8E'))
     fig <- fig %>%  plotly::add_heatmap()
     ## add text inside the corplot
     if(checkboxText){

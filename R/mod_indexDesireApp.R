@@ -11,161 +11,165 @@ mod_indexDesireApp_ui <- function(id){
   ns <- NS(id)
   tagList(
 
-
-    sidebarPanel(
-
-      tags$style(".well {background-color:grey; color: #FFFFFF;}"),
-      HTML("<img src='www/cgiar3.png' width='42' vspace='10' hspace='10' height='46' align='top'>
-                  <font size='5'>Selection indices</font>"),
-      # div(tags$p( h4(strong("Desire selection index")))),#, style = "color: #817e7e"
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-      selectInput(ns("version2IdxD"), "MTA version to analyze", choices = NULL, multiple = FALSE),
-
-      radioButtons(ns("rbSelectionIndices"),"Selection Index",choices=c("Desire","Base"), selected="Desire"),
-
-      conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Base'"),
-                       selectInput(ns("traitsBaseIndex"), "Trait(s) to analyze", choices = NULL, multiple = TRUE),
-                       uiOutput(ns("SliderBaseIndex")),
-                       actionButton(ns("runIdxB"), "Run", icon = icon("play-circle")),
-                       hr(style = "border-top: 1px solid #4c4c4c;"),
-                       uiOutput(ns("qaQcIdxBInfo")),
-                       textOutput(ns("outIdxB"))
-      ),
-      conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Desire'"),
-                       selectInput(ns("trait2IdxD"), "Trait(s) to analyze", choices = NULL, multiple = TRUE),
-                       selectInput(ns("scaledIndex"), label = "Scale traits for index?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE),
-                       # textInput(ns("desirev"), label = "Desired change in traits [Enter a numeric vector (comma delimited): e.g: 0,100,2. Standard deviations if traits are scaled, otherwise use original-scale values]", value=NULL),
-                       uiOutput(ns("SliderDesireIndex")),
-                       hr(style = "border-top: 1px solid #4c4c4c;"),
-                       shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Settings...",
-                                           numericInput(ns("proportion"), label = "Selected proportion", value = 0.1, min=0.001,max=1, step=0.05),
-                                           numericInput(ns("fontSizeRadar"), label = "Font size", value = 12),
-                                           selectInput(ns("verboseIndex"), label = "Print logs?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE)
-                       ),
-                       actionButton(ns("runIdxD"), "Run", icon = icon("play-circle")),
-                       hr(style = "border-top: 1px solid #4c4c4c;"),
-                       uiOutput(ns("qaQcIdxDInfo")),
-                       textOutput(ns("outIdxD"))
-      )
-    ), # end sidebarpanel
-    mainPanel(tabsetPanel(
-      type = "tabs",
-      tabPanel(p("Information",class="info-p"),  icon = icon("book"),
-               br(),
-               shinydashboard::box(status="success",width = 12,
-                                   solidHeader = TRUE,
-                                   column(width=12,   style = "height:800px; overflow-y: scroll;overflow-x: scroll;",
-                                          h2(strong("Status:")),
-                                          uiOutput(ns("warningMessage")),
-                                          h2(strong("Details")),
-                                          p("Genetic evaluation has as final purpose to select the individuals with highest genetic merit across
+    mainPanel( width = 12,
+               tabsetPanel( id=ns("tabsMain"),
+                            type = "tabs",
+                            tabPanel(div(icon("book"), "Information-Index") ,
+                                     br(),
+                                     shinydashboard::box(status="success",width = 12,
+                                                         solidHeader = TRUE,
+                                                         column(width=12,   style = "height:580px; overflow-y: scroll;overflow-x: scroll;",
+                                                                column(width = 6,
+                                                                       h1(strong(span("Selection indices", style="color:green"))),
+                                                                       h2(strong("Status:")),
+                                                                       uiOutput(ns("warningMessage")),
+                                                                       img(src = "www/indexDesire.png", height = 300, width = 600), # add an image
+                                                                ),
+                                                                column(width = 6, shiny::plotOutput(ns("plotDataDependencies")), ),
+                                                                column(width = 12,
+                                                                       h2(strong("Details")),
+                                                                       p("Genetic evaluation has as final purpose to select the individuals with highest genetic merit across
                                           all traits of interest. In order to select for multiple traits at the same time a selection index is preferred.
                                           This option aims to calculate a selection index using across-environment predictions from multiple
                               traits based on user's desired change (used to calculate weights) and return a table of predictions with the index and the traits used
                               for selection.
                                 The way the options are used is the following:"),
-                                          img(src = "www/indexDesire.png", height = 300, width = 600), # add an image
-                                          p(strong("Traits to analyze.-")," Traits to be considered in the index."),
-                                          p(strong("Desire vector.-")," Vector of values indicating the desired change in traits."),
-                                          p(strong("Scale predictions.-")," A TRUE or FALSE value indicating if the table of traits should be
+
+                                                                       p(strong("Type of selection index.-")," One of the two options; a) desire (user expresses desired change), b) base (user specifies weights directly)."),
+                                                                       p(strong("Traits to include in the index-")," Traits to be considered in the index."),
+                                                                       p(strong("Desire or base values.-")," Vector of values indicating the desired change in traits."),
+                                                                       p(strong("Scale traits.-")," A TRUE or FALSE value indicating if the table of traits should be
                                 scaled or not. If TRUE is selected, the values of the desire vector are expected to be expressed in
                                 standard deviations. If FALSE, the values of the desire vector are expected to be expressed in
-                                original units."),
-                                          h2(strong("References:")),
-                                          p("Pesek, J., & Baker, R. J. (1969). Desired improvement in relation to selection indices. Canadian journal of plant science, 49(6), 803-804."),
-                                          p("Ceron-Rojas, J. J., & Crossa, J. (2018). Linear selection indices in modern plant breeding (p. 256). Springer Nature."),
-                                          h2(strong("Software used:")),
-                                          p("R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing,
-                                Vienna, Austria. URL https://www.R-project.org/.")
-                                   )
-               )
-      ),
-      tabPanel(p("Input",class="input-p"), icon = icon("arrow-right-to-bracket"),
-               tabsetPanel(
-                 tabPanel("Mta-metrics", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,solidHeader = TRUE,
-                                              column(width=6,selectInput(ns("parameterMetrics"), "Parameter to visualize", choices = NULL, multiple = FALSE) ),
-                                              column(width=12, plotly::plotlyOutput(ns("barplotPredictionsMetrics")) )
-                          )
-                 ),
-                 tabPanel("Mta-modeling", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,
-                                              solidHeader = TRUE,
-                                              column(width=12,DT::DTOutput(ns("statusIndex")),style = "height:800px; overflow-y: scroll;overflow-x: scroll;")
-                          )
-                 ),
-                 tabPanel("Mta-traits-wide", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
-                                              column(width=12,DT::DTOutput(ns("tablePredictionsTraitsWide")),style = "height:800px; overflow-y: scroll;overflow-x: scroll;")
-                          )
-                 ),
-                 tabPanel("Radar plot", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,solidHeader = TRUE,
-                                              plotly::plotlyOutput(ns("plotPredictionsRadar"))
-                          )
-                 ),
-                 tabPanel("Expected response", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
-                                              plotly::plotlyOutput(ns("plotPotentialResponse"))
-                          )
-                 )
-               )
-      ),
-      tabPanel(p("Output",class="output-p"), icon = icon("arrow-right-from-bracket"),
-               tabsetPanel(
-                 tabPanel("Predictions", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,
-                                              solidHeader = TRUE,
-                                              column(
-                                                width=12,
+                                original-scale units."),
+                                                                       h2(strong("References:")),
+                                                                       p("Pesek, J., & Baker, R. J. (1969). Desired improvement in relation to selection indices. Canadian journal of plant science, 49(6), 803-804."),
+                                                                       p("Ceron-Rojas, J. J., & Crossa, J. (2018). Linear selection indices in modern plant breeding (p. 256). Springer Nature."),
+                                                                       h2(strong("Software used:")),
+                                                                       p("R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing,
+                                Vienna, Austria. URL https://www.R-project.org/."),
+                                                                ),
+                                                         )
+                                     )
+                            ),
+                            tabPanel(div(icon("arrow-right-to-bracket"), "Input"),
+                                     tabsetPanel(
+                                       tabPanel("Pick MTA-stamp", icon = icon("table"),
+                                                br(),
+                                                column(width=12, selectInput(ns("version2IdxD"), "MTA version to analyze", choices = NULL, multiple = FALSE), style = "background-color:grey; color: #FFFFFF"),
+                                                column(width=12,
+                                                       hr(style = "border-top: 3px solid #4c4c4c;"),
+                                                       h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
+                                                       hr(style = "border-top: 3px solid #4c4c4c;"),
+                                                ),
+                                                shinydashboard::box(status="success",width = 12,
+                                                                    solidHeader = TRUE,
+                                                                    column(width=12, style = "height:450px; overflow-y: scroll;overflow-x: scroll;",
+                                                                           p(span("Network plot of current analyses available.", style="color:black")),
+                                                                           shiny::plotOutput(ns("plotTimeStamps")),
+                                                                           p(span("Past modeling parameters from MTA stamp selected.", style="color:black")),
+                                                                           DT::DTOutput(ns("statusIndex")),
+                                                                           p(span("MTA predictions to be used as input.", style="color:black")),
+                                                                           DT::DTOutput(ns("tablePredictionsTraitsWide")),
+                                                                    )
+                                                )
+                                       ),
+                                       tabPanel("Pick traits", icon = icon("table"),
+                                                br(),
+                                                column(width=3, style = "background-color:grey; color: #FFFFFF",
+                                                       radioButtons(ns("rbSelectionIndices"),"Selection Index",choices=c("Desire","Base"), selected="Desire"),
+                                                       conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Base'"),
+                                                                        selectInput(ns("traitsBaseIndex"), "Trait(s) to analyze", choices = NULL, multiple = TRUE),
+                                                                        uiOutput(ns("SliderBaseIndex")),
+                                                       ),
+                                                       conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Desire'"),
+                                                                        selectInput(ns("trait2IdxD"), "Trait(s) to analyze", choices = NULL, multiple = TRUE),
+                                                                        selectInput(ns("scaledIndex"), label = "Scale traits for index?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE),
+                                                                        uiOutput(ns("SliderDesireIndex")),
+                                                       ),
+                                                ),
+                                                shinydashboard::box(status="success",width = 9,solidHeader = TRUE,
+                                                                    column(width=12, style = "height:550px; overflow-y: scroll;overflow-x: scroll;",
+                                                                           p(span("Metrics associated to the MTA stamp selected.", style="color:black")),
+                                                                           selectInput(ns("parameterMetrics"), "Parameter to visualize", choices = NULL, multiple = FALSE),
+                                                                           plotly::plotlyOutput(ns("barplotPredictionsMetrics")),
+                                                                           p(span("Radar plot to inspect population values versus target values.", style="color:black")),
+                                                                           plotly::plotlyOutput(ns("plotPredictionsRadar")),
+                                                                           p(span("Expected response to selection using current desire changes.", style="color:black")),
+                                                                           shiny::plotOutput(ns("plotPotentialResponse")),
+                                                                           shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Plot settings...",
+                                                                                               numericInput(ns("proportion"), label = "Selected proportion for graphs", value = 0.1, min=0.001,max=1, step=0.05),
+                                                                                               numericInput(ns("fontSizeRadar"), label = "Font size", value = 12),
+                                                                                               selectInput(ns("verboseIndex"), label = "Print logs?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE)
+                                                                           ),
+                                                                    ),
+                                                )
+                                       ),
+                                       tabPanel("Run analysis", icon = icon("play"),
+                                                br(),
+                                                conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Base'"),
+                                                                 actionButton(ns("runIdxB"), "Calculate index", icon = icon("play-circle")),
+                                                                 uiOutput(ns("qaQcIdxBInfo")),
+                                                                 textOutput(ns("outIdxB"))
+                                                ),
                                                 conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Desire'"),
-                                                                 DT::DTOutput(ns("predictionsIdxD"))
+                                                                 actionButton(ns("runIdxD"), "Calculate index", icon = icon("play-circle")),
+                                                                 uiOutput(ns("qaQcIdxDInfo")),
+                                                                 textOutput(ns("outIdxD")),
+                                                ),
+                                       ),
+                                     )
+                            ),
+                            tabPanel(div(icon("arrow-right-from-bracket"), "Output" ) , value = "outputTabs",
+                                     tabsetPanel(
+                                       tabPanel("Predictions", icon = icon("table"),
+                                                br(),
+                                                shinydashboard::box(status="success",width = 12,
+                                                                    solidHeader = TRUE,
+                                                                    column(
+                                                                      width=12,
+                                                                      conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Desire'"),
+                                                                                       DT::DTOutput(ns("predictionsIdxD"))
+                                                                      ),
+                                                                      conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Base'"),
+                                                                                       DT::DTOutput(ns("predictionsIdxB"))
+                                                                      ),
+                                                                      style = "height:530px; overflow-y: scroll;overflow-x: scroll;"
+                                                                    )
+                                                )
+                                       ),
+                                       tabPanel("Modeling", icon = icon("table"),
+                                                br(),
+                                                shinydashboard::box(status="success",width = 12,
+                                                                    solidHeader = TRUE,
+                                                                    column(
+                                                                      width=12,
+                                                                      conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Desire'"),
+                                                                                       DT::DTOutput(ns("modelingIdxD"))
+                                                                      ),
+                                                                      conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Base'"),
+                                                                                       DT::DTOutput(ns("modelingIdxB"))
+                                                                      ),
+                                                                      style = "height:530px; overflow-y: scroll;overflow-x: scroll;"
+                                                                    )
+                                                )
+                                       ),
+                                       tabPanel("Report", icon = icon("file-image"),
+                                                br(),
+                                                div(tags$p("Please download the report below:") ),
+                                                downloadButton(ns("downloadReportIndex"), "Download report"),
+                                                br(),
+                                                conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Desire'"),
+                                                                 uiOutput(ns('reportIndexD'))
                                                 ),
                                                 conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Base'"),
-                                                                 DT::DTOutput(ns("predictionsIdxB"))
-                                                ),
-                                                style = "height:800px; overflow-y: scroll;overflow-x: scroll;"
+                                                                 DT::DTOutput(ns("BaseIndex"))
                                                 )
-                          )
-                 ),
-                 tabPanel("Modeling", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,
-                                              solidHeader = TRUE,
-                                              column(
-                                                width=12,
-                                                conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Desire'"),
-                                                                 DT::DTOutput(ns("modelingIdxD"))
-                                                ),
-                                                conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Base'"),
-                                                                 DT::DTOutput(ns("modelingIdxB"))
-                                                ),
-                                                style = "height:800px; overflow-y: scroll;overflow-x: scroll;"
-                                                )
-                          )
-                 ),
-                 tabPanel("Report", icon = icon("file-image"),
-                          br(),
-                          div(tags$p("Please download the report below:") ),
-                          downloadButton(ns("downloadReportIndex"), "Download report"),
-                          br(),
-                          conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Desire'"),
-                                           uiOutput(ns('reportIndexD'))
-                          ),
-                          conditionalPanel(condition=paste0("input['", ns("rbSelectionIndices"),"']=='Base'"),
-                                           DT::DTOutput(ns("BaseIndex"))
-                          )
 
-                 )
-               )
-      )# end of output panel
-    )) # end mainpanel
+                                       )
+                                     )
+                            )# end of output panel
+               )) # end mainpanel
 
 
   )
@@ -178,6 +182,7 @@ mod_indexDesireApp_server <- function(id, data){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
+    output$plotDataDependencies <- shiny::renderPlot({ dependencyPlot() })
     ############################################################################ clear the console
     hideAll <- reactiveValues(clearAll = TRUE)
     observeEvent(data(), {
@@ -197,9 +202,9 @@ mod_indexDesireApp_server <- function(id, data){
         mappedColumns <- length(which(c("environment","designation","trait") %in% data()$metadata$pheno$parameter))
         if(mappedColumns == 3){
           if("mta" %in% data()$status$module){
-            HTML( as.character(div(style="color: green; font-size: 20px;", "Data is complete, please proceed to perform the selection index inspecting the other tabs.")) )
+            HTML( as.character(div(style="color: green; font-size: 20px;", "Data is complete, please proceed to perform the selection index specifying your input parameters under the Input tabs.")) )
           }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please perform a Multi-Trial Analysis before performing a selection index")) ) }
-        }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please make sure that the columns: 'environment', 'designation' and \n at least one trait have been mapped using the 'Data Retrieval' tab.")) )}
+        }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please make sure that you have computed the 'environment' column, and that column 'designation' and \n at least one trait have been mapped using the 'Data Retrieval' tab.")) )}
       }
     )
     ######################################################################################
@@ -268,6 +273,50 @@ mod_indexDesireApp_server <- function(id, data){
 
     })
     #################
+    ## render timestamps flow
+    output$plotTimeStamps <- shiny::renderPlot({
+      req(data()) # req(input$version2Sta)
+      xx <- data()$status;  yy <- data()$modeling
+      v <- which(yy$parameter == "analysisId")
+      if(length(v) > 0){
+        yy <- yy[v,c("analysisId","value")]
+        zz <- merge(xx,yy, by="analysisId", all.x = TRUE)
+      }else{ zz <- xx; zz$value <- NA}
+      if(!is.null(xx)){
+        colnames(zz) <- cgiarBase::replaceValues(colnames(zz), Search = c("analysisId","value"), Replace = c("outputId","inputId") )
+        nLevelsCheck1 <- length(na.omit(unique(zz$outputId)))
+        nLevelsCheck2 <- length(na.omit(unique(zz$inputId)))
+        if(nLevelsCheck1 > 1 & nLevelsCheck2 > 1){
+          X <- with(zz, sommer::overlay(outputId, inputId))
+        }else{
+          if(nLevelsCheck1 == 1){
+            X1 <- matrix(ifelse(is.na(zz$inputId),0,1),nrow=length(zz$inputId),1); colnames(X1) <- as.character(na.omit(unique(c(zz$outputId))))
+          }else{X1 <- model.matrix(~as.factor(outputId)-1, data=zz); colnames(X1) <- levels(as.factor(zz$outputId))}
+          if(nLevelsCheck2 == 1){
+            X2 <- matrix(ifelse(is.na(zz$inputId),0,1),nrow=length(zz$inputId),1); colnames(X2) <- as.character(na.omit(unique(c(zz$inputId))))
+          }else{X2 <- model.matrix(~as.factor(inputId)-1, data=zz); colnames(X2) <- levels(as.factor(zz$inputId))}
+          mynames <- unique(na.omit(c(zz$outputId,zz$inputId)))
+          X <- matrix(0, nrow=nrow(zz), ncol=length(mynames)); colnames(X) <- as.character(mynames)
+          X[,colnames(X1)] <- X1
+          X[,colnames(X2)] <- X2
+        };  rownames(X) <- as.character(zz$outputId)
+        rownames(X) <-as.character(as.POSIXct(as.numeric(rownames(X)), origin="1970-01-01", tz="GMT"))
+        colnames(X) <-as.character(as.POSIXct(as.numeric(colnames(X)), origin="1970-01-01", tz="GMT"))
+        # make the network plot
+        n <- network::network(X, directed = FALSE)
+        network::set.vertex.attribute(n,"family",zz$module)
+        network::set.vertex.attribute(n,"importance",1)
+        e <- network::network.edgecount(n)
+        network::set.edge.attribute(n, "type", sample(letters[26], e, replace = TRUE))
+        network::set.edge.attribute(n, "day", sample(1, e, replace = TRUE))
+        ggplot2::ggplot(n, ggplot2::aes(x = x, y = y, xend = xend, yend = yend)) +
+          ggnetwork::geom_edges(ggplot2::aes(color = family), arrow = ggplot2::arrow(length = ggnetwork::unit(6, "pt"), type = "closed") ) +
+          ggnetwork::geom_nodes(ggplot2::aes(color = family), alpha = 0.5, size=5 ) +
+          ggnetwork::geom_nodelabel_repel(ggplot2::aes(color = family, label = vertex.names ),
+                                          fontface = "bold", box.padding = ggnetwork::unit(1, "lines")) +
+          ggnetwork::theme_blank()
+      }
+    })
     ## render the data to be analyzed (wide format)
     output$statusIndex <-  DT::renderDT({
       req(data())
@@ -345,10 +394,10 @@ mod_indexDesireApp_server <- function(id, data){
         traitRp <- dd[,"trait"]
       }else{desireRp <- values; traitRp <- input$trait2IdxD}
       radarPlot(mydata, environmentPredictionsRadar2="across",traitFilterPredictionsRadar2=traitRp,proportion=input$proportion,meanGroupPredictionsRadar= paste(desireRp, collapse = ", "),
-                             fontSizeRadar=input$fontSizeRadar, r0Radar=NULL, neRadar=NULL, plotSdRadar=FALSE) # send to setting plotSdRadar # send to argument meanGroupPredictionsRadar
+                fontSizeRadar=input$fontSizeRadar, r0Radar=NULL, neRadar=NULL, plotSdRadar=FALSE) # send to setting plotSdRadar # send to argument meanGroupPredictionsRadar
     })
     # render plot for potential responses
-    output$plotPotentialResponse <-  plotly::renderPlotly({
+    output$plotPotentialResponse <-  shiny::renderPlot({
       req(data())
       req(input$version2IdxD)
       req(input$trait2IdxD)
@@ -366,7 +415,7 @@ mod_indexDesireApp_server <- function(id, data){
       }
       values <- as.numeric(values)
       plotDensitySelected(object=dtIdxD,environmentPredictionsRadar2="across", traitFilterPredictionsRadar2=input$trait2IdxD, meanGroupPredictionsRadar=paste(values, collapse = ", "), proportion=input$proportion,
-                                       analysisId=input$version2IdxD, trait=input$trait2IdxD, desirev=paste(values, collapse = ", "), scaled=input$scaledIndex)
+                          analysisId=input$version2IdxD, trait=input$trait2IdxD, desirev=paste(values, collapse = ", "), scaled=input$scaledIndex)
     })
     ## render result of "run" button click
     outIdxD <- eventReactive(input$runIdxD, {
@@ -414,8 +463,8 @@ mod_indexDesireApp_server <- function(id, data){
         )
         if(!inherits(result,"try-error")) {
           data(result) # update data with results
-          # save(result, file = "./R/outputs/resultIndex.RData")
-          cat(paste("Selection index step with id:",as.POSIXct(result$status$analysisId[length(result$status$analysisId)], origin="1970-01-01", tz="GMT"),"saved."))
+          cat(paste("Selection index step with id:",as.POSIXct(result$status$analysisId[length(result$status$analysisId)], origin="1970-01-01", tz="GMT"),"saved. Please proceed to select the best crosses using the OCS module using this time stamp."))
+          updateTabsetPanel(session, "tabsMain", selected = "outputTabs")
         }else{
           cat(paste("Analysis failed with the following error message: \n\n",result[[1]]))
         }
@@ -427,17 +476,17 @@ mod_indexDesireApp_server <- function(id, data){
           # if ( hideAll$clearAll){
           #   return()
           # }else{
-            predictions <- result$predictions
-            predictions <- predictions[predictions$module=="indexD",]
-            predictions$analysisId <- as.numeric(predictions$analysisId)
-            predictions <- predictions[!is.na(predictions$analysisId),]
-            current.predictions <- predictions[predictions$analysisId==max(predictions$analysisId),]
-            current.predictions <- subset(current.predictions, select = -c(module,analysisId))
-            numeric.output <- c("predictedValue", "stdError", "reliability")
-            DT::formatRound(DT::datatable(current.predictions, extensions = 'Buttons',
-                          options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-                                         lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
-            ), numeric.output)
+          predictions <- result$predictions
+          predictions <- predictions[predictions$module=="indexD",]
+          predictions$analysisId <- as.numeric(predictions$analysisId)
+          predictions <- predictions[!is.na(predictions$analysisId),]
+          current.predictions <- predictions[predictions$analysisId==max(predictions$analysisId),]
+          current.predictions <- subset(current.predictions, select = -c(module,analysisId))
+          numeric.output <- c("predictedValue", "stdError", "reliability")
+          DT::formatRound(DT::datatable(current.predictions, extensions = 'Buttons',
+                                        options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                       lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+          ), numeric.output)
           # }
         })
         # display table of modeling
@@ -445,14 +494,14 @@ mod_indexDesireApp_server <- function(id, data){
           # if ( hideAll$clearAll){
           #   return()
           # }else{
-            modeling <- result$modeling
-            mtas <- result$status[which(result$status$module == "indexD"),"analysisId"]; mtaId <- mtas[length(mtas)]
-            modeling <- modeling[which(modeling$analysisId == mtaId),]
-            modeling <- subset(modeling, select = -c(module,analysisId))
-            DT::datatable(modeling, extensions = 'Buttons',
-                                          options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-                                                         lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
-            )
+          modeling <- result$modeling
+          mtas <- result$status[which(result$status$module == "indexD"),"analysisId"]; mtaId <- mtas[length(mtas)]
+          modeling <- modeling[which(modeling$analysisId == mtaId),]
+          modeling <- subset(modeling, select = -c(module,analysisId))
+          DT::datatable(modeling, extensions = 'Buttons',
+                        options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                       lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+          )
           # }
         })
         ## Report tab
@@ -554,12 +603,13 @@ mod_indexDesireApp_server <- function(id, data){
           input$version2IdxD,
           traitsBaseIndex,
           values),
-        silent=TRUE
+          silent=TRUE
         )
         if(!inherits(result,"try-error")) {
           data(result) # update data with results
           # save(result, file = "./R/outputs/resultIndex.RData")
-          cat(paste("Selection index step with id:",result$status$analysisId[length(result$status$analysisId)],"saved."))
+          cat(paste("Selection index step with id:",result$status$analysisId[length(result$status$analysisId)],"saved. Please proceed to use this time stamp in the optimal cross selection."))
+          updateTabsetPanel(session, "tabsMain", selected = "outputTabs")
         }else{
           cat(paste("Analysis failed with the following error message: \n\n",result[[1]]))
         }
@@ -634,8 +684,7 @@ mod_indexDesireApp_server <- function(id, data){
 
       }
 
-
-      # hideAll$clearAll <- FALSE
+      hideAll$clearAll <- FALSE
 
     })
 

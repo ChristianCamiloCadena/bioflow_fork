@@ -366,7 +366,9 @@ if (is.null(result)){
   idMet <-result$modeling[which(result$modeling$parameter %in% "analysisId" & result$modeling$analysisId == idIndex),"value"]
   mydata <- dtIdxD[which(dtIdxD$analysisId == idMet),setdiff(colnames(dtIdxD),c("module","analysisId"))]
   desirev <-result$modeling[which(result$modeling$parameter %in% "desire" & result$modeling$analysisId == idIndex),"value"]
-  uTraits <- unique(dtIdxD[which(dtIdxD$analysisId == idMet),"trait"])
+  uTraits <- result$modeling[which(result$modeling$parameter %in% "desire" & result$modeling$analysisId == idIndex),"trait"]
+uTraits <- gsub("_scaled","",uTraits)
+  # uTraits <- unique(dtIdxD[which(dtIdxD$analysisId == idMet),"trait"])
   
   object=result
   environmentPredictionsRadar2="across"
@@ -438,7 +440,7 @@ if (is.null(result)){
     
   }else{
     
-    plotly::renderPlotly({
+   shiny::renderPlot({ # plotly::renderPlotly({
       ## if user provides threshold values let them know the selection differentials
       if(length(as.numeric(unlist(strsplit(meanGroupPredictionsRadar,",")))) == nrow(mm)){
         ## add product profile means'
@@ -479,8 +481,9 @@ if (is.null(result)){
           ggplot2::facet_wrap(~trait, ncol=3, scales = "free") +
           ggplot2::geom_vline(data = mm, ggplot2::aes(xintercept = predictedValue), linetype="dotdash", col="red")
       }
-      fig2 <-  plotly::ggplotly(p)
-      fig2
+      # fig2 <-  plotly::ggplotly(p)
+      # fig2
+     p
     })
     
   }
@@ -490,4 +493,14 @@ if (is.null(result)){
 }
 
 ```
+
+### References of methods used
+
+Pesek, J., & Baker, R. J. (1969). Desired improvement in relation to selection indices. Canadian journal of plant science, 49(6), 803-804.
+
+Ceron-Rojas, J. J., & Crossa, J. (2018). Linear selection indices in modern plant breeding (p. 256). Springer Nature.
+
+R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+<p>&nbsp;</p>
 

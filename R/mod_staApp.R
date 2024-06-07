@@ -10,149 +10,177 @@
 mod_staApp_ui <- function(id){
   ns <- NS(id)
   tagList(
-    sidebarPanel(
 
+    mainPanel( width = 12,
+               tabsetPanel(id=ns("tabsMain"),
+                           type = "tabs",
 
-      tags$style(".well {background-color:grey; color: #FFFFFF;}"),
-      HTML("<img src='www/cgiar3.png' width='42' vspace='10' hspace='10' height='46' align='top'>
-                  <font size='5'>Single Trial Analysis</font>"),
-      # div(tags$p( h4(strong("Single Trial Analysis")))),#, style = "color: #817e7e"
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-      # input <- list(version2Sta=)
-      selectInput(ns("version2Sta"), "Data QA version(s) to consider", choices = NULL, multiple = TRUE),
-      selectInput(ns("genoUnitSta"), "Genetic evaluation unit(s)", choices = NULL, multiple = TRUE),
-      tags$span(id = ns('geno_unit_holder'), style="color:orange",
-                p("**If you have hybrid-crop data and plan to use 'mother' and 'father' information for GCA models please make sure you uploaded your Pedigree data (you can use the same Phenotype file if those columns are there)."),
-      ),
-      selectInput(ns("trait2Sta"), "Trait(s) to analyze", choices = NULL, multiple = TRUE),
-      selectInput(ns("fixedTermSta2"), "Covariable(s)", choices = NULL, multiple = TRUE),
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-      shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Settings...",
-                          selectInput(ns("genoAsFixedSta"),"Predictions",choices=list("BLUEs"=TRUE,"BLUPs"=FALSE),selected=TRUE),
-                          numericInput(ns("maxitSta"),"Number of iterations",value=35),
-                          selectInput(ns("verboseSta"),"Print logs",choices=list("Yes"=TRUE,"No"=FALSE),selected=FALSE)
-      ),
-      shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Trait distributions (optional)...",
-                          column(width = 12,DT::DTOutput(ns("traitDistSta")), style = "height:400px; overflow-y: scroll;overflow-x: scroll;")
-      ),
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-      actionButton(ns("runSta"), "Run", icon = icon("play-circle")),
-      hr(style = "border-top: 1px solid #4c4c4c;"),
-      uiOutput(ns("qaQcStaInfo")),
-      textOutput(ns("outSta"))
-    ), # end sidebarpanel
-    mainPanel(tabsetPanel(
-      type = "tabs",
-
-      tabPanel(p("Information", class="info-p"), icon = icon("book"),
-               br(),
-               shinydashboard::box(status="success",width = 12,
-                                   solidHeader = TRUE,
-                                   column(width=12,   style = "height:800px; overflow-y: scroll;overflow-x: scroll;",
-                                          h2(strong("Status:")),
-                                          uiOutput(ns("warningMessage")),
-                                          h2(strong("Details")),
-                                          p("The genetic evaluation approach we use known as 'two-step' first analyze trait by trait and trial by trial
+                           tabPanel(div(icon("book"), "Information-STA") ,
+                                    br(),
+                                    shinydashboard::box(status="success",width = 12,
+                                                        solidHeader = TRUE,
+                                                        column(width=12,   style = "height:650px; overflow-y: scroll;overflow-x: scroll;",
+                                                               column(width = 6,
+                                                                      h1(strong(span("Single Trial Analysis", style="color:green"))),
+                                                                      h2(strong("Status:")),
+                                                                      uiOutput(ns("warningMessage")),
+                                                                      img(src = "www/sta.png", height = 200, width = 300), # add an image
+                                                               ),
+                                                               column(width = 6, shiny::plotOutput(ns("plotDataDependencies")), ),
+                                                               column(width = 12,
+                                                                      h2(strong("Details")),
+                                                                      p("The genetic evaluation approach we use known as 'two-step' first analyze trait by trait and trial by trial
                                           to remove the spatial noise from experiments using experimental factors like blocking and spatial coordinates.
                                           Each trial is one level of the environment
                               column (defined when the user matches the expected columns to columns present in the initial phenotypic input file).
                               Genotype is fitted as both, fixed and random. The user defines which should be returned in the predictions table.
                               By default genotype (designation column) predictions and their standard errors are returned.
                                 The way the options are used is the following:"),
-                                          img(src = "www/sta.png", height = 200, width = 300), # add an image
-                                          p(strong("Fixed effects.-"),"Columns to be fitted as fixed effects in each trial."),
-                                          p(strong("Traits to analyze.-")," Traits to be analyzed. If no design factors can be fitted simple means are taken."),
-                                          p(strong("Number of iterations.-")," Maximum number of restricted maximum likelihood iterations to be run for each trial-trait combination."),
-                                          p(strong("Note.-")," A design-agnostic spatial design is carried. That means, all the spatial-related factors will be fitted if pertinent.
+                                                                      p(strong("Genetic evaluation unit.-")," One or more of the following; designation, mother, father to indicate which column(s) should be considered the unit of genetic evaluation to compute BLUEs or BLUPs in the single trial analysis step."),
+                                                                      p(strong("Traits to analyze.-")," Traits to be analyzed. If no design factors can be fitted simple means are taken."),
+                                                                      p(strong("Covariates.-"),"Columns to be fitted as as additional fixed effect covariates in each trial."),
+                                                                      p(strong("Additional settings.-")),
+                                                                      p(strong("Type of estimate.-")," Whether BLUEs or BLUPs should be stored for the second stage."),
+                                                                      p(strong("Number of iterations.-")," Maximum number of restricted maximum likelihood iterations to be run for each trial-trait combination."),
+                                                                      p(strong("Print logs.-")," Whether the logs of the run should be printed in the screen or not."),
+                                                                      p(strong("Note.-")," A design-agnostic spatial design is carried. That means, all the spatial-related factors will be fitted if pertinent.
                                 For example, if a trial has rowcoord information it will be fitted, if not it will be ignored. A two-dimensional spline kernel is only
                                 fitted when the trial size exceeds 5 rows and 5 columns. In addition the following rules are followed: 1) Rows or columns are fitted if
                                 you have equal or more than 3 levels, 2) Reps are fitted if you have equal or more than 2 levels, 3) Block (Sub-block) are fitted if you
                                 have equal or more than 4 levels. "),
-                                          h2(strong("References:")),
-                                          p("Velazco, J. G., Rodriguez-Alvarez, M. X., Boer, M. P., Jordan, D. R., Eilers, P. H., Malosetti, M., & Van Eeuwijk, F. A. (2017).
+                                                                      h2(strong("References:")),
+                                                                      p("Velazco, J. G., Rodriguez-Alvarez, M. X., Boer, M. P., Jordan, D. R., Eilers, P. H., Malosetti, M., & Van Eeuwijk, F. A. (2017).
                                 Modelling spatial trends in sorghum breeding field trials using a two-dimensional P-spline mixed model. Theoretical and Applied
                                 Genetics, 130, 1375-1392."),
-                                          p("Rodriguez-Alvarez, M. X., Boer, M. P., van Eeuwijk, F. A., & Eilers, P. H. (2018). Correcting for spatial heterogeneity in plant
+                                                                      p("Rodriguez-Alvarez, M. X., Boer, M. P., van Eeuwijk, F. A., & Eilers, P. H. (2018). Correcting for spatial heterogeneity in plant
                                 breeding experiments with P-splines. Spatial Statistics, 23, 52-71."),
-                                          h2(strong("Software used:")),
-                                          p("R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing,
+                                                                      h2(strong("Software used:")),
+                                                                      p("R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing,
                                 Vienna, Austria. URL https://www.R-project.org/."),
-                                          p("Boer M, van Rossum B (2022). _LMMsolver: Linear Mixed Model Solver_. R package version 1.0.4.9000.")
-
-
-                                   )
-               )
-      ),
-      tabPanel(p("Input",class = "input-p"), icon = icon("arrow-right-to-bracket"),
-               tabsetPanel(
-                 tabPanel("QA-modeling", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,
-                                              solidHeader = TRUE,
-                                              column(width=12,DT::DTOutput(ns("statusSta")),style = "height:800px; overflow-y: scroll;overflow-x: scroll;")
-                          )
-                 ),
-                 tabPanel("Effects", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,
-                                              solidHeader = TRUE,
-                                              selectInput(ns("feature"), "Check units by:", choices = NULL, multiple = FALSE),
-                                              column(width=12,DT::DTOutput(ns("summariesSta")),style = "height:800px; overflow-y: scroll;overflow-x: scroll;")
-                          )
-                 ),
-                 tabPanel("Trait distribution", icon = icon("magnifying-glass-chart"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,
-                                              solidHeader = TRUE,
-                                              selectInput(ns("trait3Sta"), "Trait to visualize", choices = NULL, multiple = FALSE),
-                                              plotly::plotlyOutput(ns("plotPredictionsCleanOut"))
-                          )
-                 ),
-                 tabPanel("Data", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,
-                                              solidHeader = TRUE,
-                                              column(width=12,DT::DTOutput(ns("phenoSta")),style = "height:800px; overflow-y: scroll;overflow-x: scroll;")
-                          )
-                 )
-               )# of of tabsetPanel
-      ),
-      tabPanel(p("Output",class = "output-p"), icon = icon("arrow-right-from-bracket"),
-               tabsetPanel(
-                 tabPanel("Predictions", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,
-                                              solidHeader = TRUE,
-                                              column(width=12,DT::DTOutput(ns("predictionsSta")),style = "height:800px; overflow-y: scroll;overflow-x: scroll;")
-                          )
-                 ),
-                 tabPanel("Metrics", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,
-                                              solidHeader = TRUE,
-                                              column(width=12,br(),DT::DTOutput(ns("metricsSta")),style = "height:800px; overflow-y: scroll;overflow-x: scroll;")
-                          )
-                 ),
-                 tabPanel("Modeling", icon = icon("table"),
-                          br(),
-                          shinydashboard::box(status="success",width = 12,
-                                              solidHeader = TRUE,
-                                              column(width=12,br(),DT::DTOutput(ns("modelingSta")),style = "height:800px; overflow-y: scroll;overflow-x: scroll;")
-                          )
-                 ),
-                 tabPanel("Report", icon = icon("file-image"),
-                          br(),
-                          div(tags$p("Please download the report below:") ),
-                          downloadButton(ns("downloadReportSta"), "Download report"),
-                          br(),
-                          uiOutput(ns('reportSta')),
-                 )
-               ) # of of tabsetPanel
-      )# end of output panel
-
-
-    )) # end mainpanel
-
+                                                                      p("Boer M, van Rossum B (2022). _LMMsolver: Linear Mixed Model Solver_. R package version 1.0.4.9000.")
+                                                               ),
+                                                        )
+                                    )
+                           ),
+                           tabPanel(div(icon("arrow-right-to-bracket"), "Input"),
+                                    tabsetPanel(
+                                      tabPanel("Pick QA-stamp(s)", icon = icon("table"),
+                                               br(),
+                                               column(width=12, selectInput(ns("version2Sta"), "Data QA version(s) to consider (tagged records will be ignored)", choices = NULL, multiple = TRUE), style = "background-color:grey; color: #FFFFFF"),
+                                               column(width=12,
+                                                      hr(style = "border-top: 3px solid #4c4c4c;"),
+                                                      h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
+                                                      hr(style = "border-top: 3px solid #4c4c4c;"),
+                                               ),
+                                               shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                                                   column(width=12,style = "height:460px; overflow-y: scroll;overflow-x: scroll;",
+                                                                          p(span("Network plot of current analyses available.", style="color:black")),
+                                                                          shiny::plotOutput(ns("plotTimeStamps")),
+                                                                          p(span("Past modeling parameters from QA stamp selected.", style="color:black")),
+                                                                          DT::DTOutput(ns("statusSta")), # modeling table
+                                                                          p(span("Raw phenotypic data to be used as input.", style="color:black")),
+                                                                          DT::DTOutput(ns("phenoSta")), # data input
+                                                                   )
+                                               )
+                                      ),
+                                      tabPanel("Pick trait(s)", icon = icon("magnifying-glass-chart"),
+                                               br(),
+                                               column(width=12, style = "background-color:grey; color: #FFFFFF",
+                                                      column(width=6, selectInput(ns("trait2Sta"), "Trait(s) to analyze", choices = NULL, multiple = TRUE) ),
+                                                      column(width=6,selectInput(ns("fixedTermSta2"), "Covariable(s)", choices = NULL, multiple = TRUE) ),
+                                                      column(width = 12, style = "background-color:grey; color: #FFFFFF",
+                                                             shinydashboard::box(width = 12, status = "success",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Alternative response distributions...",
+                                                                                 p(span("Family of response variable to be fitted.", style="color:black"), span("(double click in the cells if you would like to model a trait with a different distribution other than normal).", style="color:black")), # table of families to assume
+                                                                                 DT::DTOutput(ns("traitDistSta")),
+                                                             ),
+                                                      ),
+                                               ),
+                                               column(width=12,
+                                                      hr(style = "border-top: 3px solid #4c4c4c;"),
+                                                      h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
+                                                      hr(style = "border-top: 3px solid #4c4c4c;"),
+                                               ),
+                                               shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                                                   column(width=12, style = "height:420px; overflow-y: scroll;overflow-x: scroll;", # height:420px;
+                                                                          p(span("Boxplot of trait dispersion by environment", style="color:black")),
+                                                                          selectInput(ns("trait3Sta"), "Trait to visualize", choices = NULL, multiple = FALSE),
+                                                                          shiny::plotOutput(ns("plotPredictionsCleanOut")), # plotly::plotlyOutput(ns("plotPredictionsCleanOut")),
+                                                                   ),
+                                               )
+                                      ),
+                                      tabPanel("Pick effect(s)", icon = icon("table"),
+                                               br(),
+                                               column(width=12, style = "background-color:grey; color: #FFFFFF" ,
+                                                      column(width=6, selectInput(ns("genoUnitSta"), "Genetic evaluation unit(s)", choices = NULL, multiple = TRUE) ),
+                                                      column(width=6,tags$span(id = ns('geno_unit_holder'), #style="color:orange",
+                                                                               p("**If you have hybrid-crop data and plan to use 'mother' and 'father' information for GCA models please make sure you uploaded your Pedigree data (you can use the same Phenotype file if those columns are there)."),
+                                                      )),
+                                               ),
+                                               column(width=12,
+                                                      hr(style = "border-top: 3px solid #4c4c4c;"),
+                                                      h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
+                                                      hr(style = "border-top: 3px solid #4c4c4c;"),
+                                               ),
+                                               shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                                                   column(width=12, style = "height:480px; overflow-y: scroll;overflow-x: scroll;",
+                                                                          p(span("Summary of number of individuals, mothers and fathers available in the dataset.", style="color:black")),
+                                                                          selectInput(ns("feature"), "Summarize evaluation units by:", choices = NULL, multiple = FALSE),
+                                                                          DT::DTOutput(ns("summariesSta")), # genetic evaluation units
+                                                                          p(span("Experimental design factos present per environment", style="color:black")),
+                                                                          DT::dataTableOutput(ns("dtFieldTraC")), # design units
+                                                                   )
+                                               )
+                                      ),
+                                      tabPanel("Run analysis", icon = icon("play"),
+                                               br(),
+                                               actionButton(ns("runSta"), "Run STA", icon = icon("play-circle")),
+                                               uiOutput(ns("qaQcStaInfo")),
+                                               textOutput(ns("outSta")),
+                                               column(width=12,
+                                                      hr(style = "border-top: 3px solid #4c4c4c;"),
+                                                      shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Additional run settings...",
+                                                                          selectInput(ns("genoAsFixedSta"),"Estimate type",choices=list("BLUEs"=TRUE,"BLUPs"=FALSE),selected=TRUE),
+                                                                          numericInput(ns("maxitSta"),"Number of iterations",value=35),
+                                                                          selectInput(ns("verboseSta"),"Print logs",choices=list("Yes"=TRUE,"No"=FALSE),selected=FALSE)
+                                                      ),
+                                                      hr(style = "border-top: 3px solid #4c4c4c;"),
+                                               ),
+                                      ),
+                                    )# of of tabsetPanel
+                           ),
+                           tabPanel(div(icon("arrow-right-from-bracket"), "Output" ) , value = "outputTabs",
+                                    tabsetPanel(
+                                      tabPanel("Predictions", icon = icon("table"),
+                                               br(),
+                                               shinydashboard::box(status="success",width = 12,
+                                                                   solidHeader = TRUE,
+                                                                   column(width=12,DT::DTOutput(ns("predictionsSta")),style = "height:530px; overflow-y: scroll;overflow-x: scroll;")
+                                               )
+                                      ),
+                                      tabPanel("Metrics", icon = icon("table"),
+                                               br(),
+                                               shinydashboard::box(status="success",width = 12,
+                                                                   solidHeader = TRUE,
+                                                                   column(width=12,br(),DT::DTOutput(ns("metricsSta")),style = "height:530px; overflow-y: scroll;overflow-x: scroll;")
+                                               )
+                                      ),
+                                      tabPanel("Modeling", icon = icon("table"),
+                                               br(),
+                                               shinydashboard::box(status="success",width = 12,
+                                                                   solidHeader = TRUE,
+                                                                   column(width=12,br(),DT::DTOutput(ns("modelingSta")),style = "height:530px; overflow-y: scroll;overflow-x: scroll;")
+                                               )
+                                      ),
+                                      tabPanel("Report STA", icon = icon("file-image"),
+                                               br(),
+                                               div(tags$p("Please download the report below:") ),
+                                               downloadButton(ns("downloadReportSta"), "Download report"),
+                                               br(),
+                                               uiOutput(ns('reportSta')),
+                                      ),
+                                    ) # of of tabsetPanel
+                           )# end of output panel
+               )) # end mainpanel
   )
 }
 
@@ -163,6 +191,7 @@ mod_staApp_server <- function(id,data){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
+    output$plotDataDependencies <- shiny::renderPlot({ dependencyPlot() })
     ############################################################################ clear the console
     hideAll <- reactiveValues(clearAll = TRUE)
     observeEvent(data(), {
@@ -192,9 +221,9 @@ mod_staApp_server <- function(id,data){
         mappedColumns <- length(which(c("environment","designation","trait") %in% data()$metadata$pheno$parameter))
         if(mappedColumns == 3){
           if("qaRaw" %in% data()$status$module){
-            HTML( as.character(div(style="color: green; font-size: 20px;", "Data is complete, please proceed to perform the STA inspecting the other tabs.")) )
-          }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please identify outliers in the raw data before performing an STA.")) ) }
-        }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please make sure that the columns: 'environment', 'designation' and \n at least one trait have been mapped using the 'Data Retrieval' tab.")) )}
+            HTML( as.character(div(style="color: green; font-size: 20px;", "Data is complete, please proceed to perform the single-trial analysis specifying your input parameters under the 'Input' tabs.")) )
+          }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please identify trait-outliers in the phenotypic dataset before performing a single-trial analysis. Go to the 'QC & Transform' tab to do so. ")) ) }
+        }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please make sure that you have computed the 'environment' column, and that column 'designation' and \n at least one trait have been mapped using the 'Data Retrieval' tab.")) )}
       }
     )
     # QA versions to use
@@ -202,7 +231,7 @@ mod_staApp_server <- function(id,data){
       req(data())
       dtMta <- data()
       dtMta <- dtMta$status
-      dtMta <- dtMta[which(dtMta$module %in% c("qaRaw","qaFilter")),]
+      dtMta <- dtMta[which(dtMta$module %in% c("qaRaw", "qaFilter", "qaMb", "qaDesign")),]
       traitsMta <- unique(dtMta$analysisId)
       if(length(traitsMta) > 0){names(traitsMta) <- as.POSIXct(traitsMta, origin="1970-01-01", tz="GMT")}
       updateSelectInput(session, "version2Sta", choices = traitsMta)
@@ -210,8 +239,9 @@ mod_staApp_server <- function(id,data){
     # genetic evaluation unit
     observe({
       req(data())
+      req(input$version2Sta)
       genetic.evaluation <- c("designation", "mother","father")
-      updateSelectInput(session, "genoUnitSta",choices = genetic.evaluation)
+      updateSelectInput(session, "genoUnitSta",choices = genetic.evaluation, selected = "designation")
     })
     # traits
     observeEvent(c(data(),input$version2Sta,input$genoUnitSta), {
@@ -222,7 +252,7 @@ mod_staApp_server <- function(id,data){
       dtSta <- dtSta$modifications$pheno
       dtSta <- dtSta[which(dtSta$analysisId %in% input$version2Sta),] # only traits that have been QA
       traitsSta <- unique(dtSta$trait)
-      updateSelectInput(session, "trait2Sta", choices = traitsSta)
+      updateSelectInput(session, "trait2Sta", choices = traitsSta, selected = traitsSta)
     })
     # fixed effect covariates
     observeEvent(c(data(),input$version2Sta,input$genoUnitSta, input$trait2Sta), {
@@ -234,14 +264,15 @@ mod_staApp_server <- function(id,data){
       dtSta <- dtSta$modifications$pheno # only traits that have been QA
       dtSta <- dtSta[which(dtSta$analysisId %in% input$version2Sta),]
       traitsSta <- unique(dtSta$trait)
-      updateSelectInput(session, "fixedTermSta2", choices = traitsSta[traitsSta!=input$trait2Sta])
+      '%!in%' <- function(x,y)!('%in%'(x,y))
+      updateSelectInput(session, "fixedTermSta2", choices = traitsSta[traitsSta%!in%input$trait2Sta])
     })
     # reactive table for trait family distributions
     dtDistTrait = reactive({
       req(data())
+      req(input$trait2Sta)
       dtSta <- data()
       dtSta <- dtSta$data$pheno
-      req(input$trait2Sta)
       traitNames = input$trait2Sta
       mm = matrix(0,nrow = 8, ncol = length(traitNames));
       rownames(mm) <- c(
@@ -272,6 +303,7 @@ mod_staApp_server <- function(id,data){
                                        )
     )
 
+    ##
     proxy = DT::dataTableProxy('traitDistSta')
 
     observeEvent(input$traitDistSta_cell_edit, {
@@ -282,9 +314,53 @@ mod_staApp_server <- function(id,data){
       v = info$value
       xx$df[i, j] <- isolate(DT::coerceValue(v, xx$df[i, j]))
     })
+    ## render timestamps flow
+    output$plotTimeStamps <- shiny::renderPlot({
+      req(data()) # req(input$version2Sta)
+      xx <- data()$status;  yy <- data()$modeling
+      v <- which(yy$parameter == "analysisId")
+      if(length(v) > 0){
+        yy <- yy[v,c("analysisId","value")]
+        zz <- merge(xx,yy, by="analysisId", all.x = TRUE)
+      }else{ zz <- xx; zz$value <- NA}
+      if(!is.null(xx)){
+        colnames(zz) <- cgiarBase::replaceValues(colnames(zz), Search = c("analysisId","value"), Replace = c("outputId","inputId") )
+        nLevelsCheck1 <- length(na.omit(unique(zz$outputId)))
+        nLevelsCheck2 <- length(na.omit(unique(zz$inputId)))
+        if(nLevelsCheck1 > 1 & nLevelsCheck2 > 1){
+          X <- with(zz, sommer::overlay(outputId, inputId))
+        }else{
+          if(nLevelsCheck1 <= 1){
+            X1 <- matrix(ifelse(is.na(zz$inputId),0,1),nrow=length(zz$inputId),1); colnames(X1) <- as.character(na.omit(unique(c(zz$outputId))))
+          }else{X1 <- model.matrix(~as.factor(outputId)-1, data=zz); colnames(X1) <- levels(as.factor(zz$outputId))}
+          if(nLevelsCheck2 <= 1){
+            X2 <- matrix(ifelse(is.na(zz$inputId),0,1),nrow=length(zz$inputId),1); colnames(X2) <- as.character(na.omit(unique(c(zz$inputId))))
+          }else{X2 <- model.matrix(~as.factor(inputId)-1, data=zz); colnames(X2) <- levels(as.factor(zz$inputId))}
+          mynames <- unique(na.omit(c(zz$outputId,zz$inputId)))
+          X <- matrix(0, nrow=nrow(zz), ncol=length(mynames)); colnames(X) <- as.character(mynames)
+          if(!is.null(X1)){X[,colnames(X1)] <- X1}
+          if(!is.null(X2)){X[,colnames(X2)] <- X2}
+        };  rownames(X) <- as.character(zz$outputId)
+        rownames(X) <-as.character(as.POSIXct(as.numeric(rownames(X)), origin="1970-01-01", tz="GMT"))
+        colnames(X) <-as.character(as.POSIXct(as.numeric(colnames(X)), origin="1970-01-01", tz="GMT"))
+        # make the network plot
+        n <- network::network(X, directed = FALSE)
+        network::set.vertex.attribute(n,"family",zz$module)
+        network::set.vertex.attribute(n,"importance",1)
+        e <- network::network.edgecount(n)
+        network::set.edge.attribute(n, "type", sample(letters[26], e, replace = TRUE))
+        network::set.edge.attribute(n, "day", sample(1, e, replace = TRUE))
+        ggplot2::ggplot(n, ggplot2::aes(x = x, y = y, xend = xend, yend = yend)) +
+          ggnetwork::geom_edges(ggplot2::aes(color = family), arrow = ggplot2::arrow(length = ggnetwork::unit(6, "pt"), type = "closed") ) +
+          ggnetwork::geom_nodes(ggplot2::aes(color = family), alpha = 0.5, size=5 ) +
+          ggnetwork::geom_nodelabel_repel(ggplot2::aes(color = family, label = vertex.names ),
+                                          fontface = "bold", box.padding = ggnetwork::unit(1, "lines")) +
+          ggnetwork::theme_blank()
+      }
+    })
     ## render the data to be analyzed
     observeEvent(data(),{
-      if(sum(data()$status$module %in% "qaRaw") != 0) {
+      if(sum(data()$status$module %in% c("qaRaw", "qaMb")) != 0) {
         ## render status
         output$statusSta <-  DT::renderDT({
           req(data())
@@ -307,19 +383,33 @@ mod_staApp_server <- function(id,data){
           dtSta <- data() # dtSta<- result
           ### change column names for mapping
           paramsPheno <- data()$metadata$pheno
-          paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
+          paramsPheno <- paramsPheno[paramsPheno$parameter != "trait",]
+          paramsPheno <- paramsPheno[which(!duplicated(paramsPheno$value)),]
           colnames(dtSta$data$pheno) <- cgiarBase::replaceValues(colnames(dtSta$data$pheno), Search = paramsPheno$value, Replace = paramsPheno$parameter )
           paramsPed <- data()$metadata$pedigree
           colnames(dtSta$data$pedigree) <- cgiarBase::replaceValues(colnames(dtSta$data$pedigree), Search = paramsPed$value, Replace = paramsPed$parameter )
-          ###
+          ### avoid columns mother and father in the pehnotype file
+          '%!in%' <- function(x,y)!('%in%'(x,y))
+          dtSta$data$pheno <- dtSta$data$pheno[,which(colnames(dtSta$data$pheno) %!in% c("mother","father") )]
+          ## merge data
           dtSta <- merge(dtSta$data$pheno, dtSta$data$pedigree, by="designation") # merge mother and father info in the pheno data frame
           dtStaList <- split(dtSta, dtSta[,input$feature]) # split info by environment
           dtStaListRes <- list()
           for(i in 1:length(dtStaList)){
-            dtStaListRes[[i]] <- as.data.frame(as.table(apply(dtStaList[[i]][,c("designation","mother","father")],2, function(x){length(na.omit(unique(x)))})))
+            dtStaListRes[[i]] <- as.data.frame(as.table(apply(dtStaList[[i]][,intersect( c("designation","mother","father"), colnames(dtSta) ), drop= FALSE],2, function(x){length(na.omit(unique(x)))})))
             dtStaListRes[[i]][,input$feature] <- names(dtStaList)[i]
+            if("mother" %!in% dtStaListRes[[i]]$Var1){
+              prov <- dtStaListRes[[i]]
+              prov$Var1 <- "mother"; prov$Freq <- 0
+            }else{prov <- NULL}
+            if("father" %!in% dtStaListRes[[i]]$Var1){
+              prov2 <- dtStaListRes[[i]]
+              prov2$Var1 <- "father"; prov2$Freq <- 0
+            }else{prov2 <- NULL}
+            if(!is.null(prov) | !is.null(prov2)){dtStaListRes[[i]] <- rbind(dtStaListRes[[i]], prov,prov2)}
           }
           dtSta <- do.call(rbind, dtStaListRes)
+
           colnames(dtSta)[1:2] <- c("geneticUnit", "numberOfUnits")
           dtSta <- dtSta[with(dtSta, order(geneticUnit)), ]; rownames(dtSta) <- NULL
           DT::datatable(dtSta, extensions = 'Buttons',
@@ -327,12 +417,42 @@ mod_staApp_server <- function(id,data){
                                        lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
           )
         })
+        ## render designs
+        output$dtFieldTraC <-  DT::renderDT({
+          req(data())
+          req(input$version2Sta)
+          object <- data()
+          dtProv = object$data$pheno
+          paramsPheno <- object$metadata$pheno
+          if(!is.null(paramsPheno)){
+            paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
+            colnames(dtProv) <- cgiarBase::replaceValues(colnames(dtProv), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+            dtProvNames <- c("row","col","rep","iBlock")
+            envCol <- paramsPheno[which(paramsPheno$parameter == "environment"),"value"]
+            if(length(envCol) > 0){
+              fieldNames <- as.character(unique(dtProv[,"environment"]))
+              spD <- split(dtProv,dtProv[,"environment"])
+              presentFactors <- paramsPheno$parameter[which(paramsPheno$parameter %in% dtProvNames)]
+              presentFactorsPerField <- lapply(spD, function(x){
+                apply(x[,presentFactors, drop=FALSE], 2, function(y){length(unique(y))})
+              })
+              presentFactorsPerField <- do.call(rbind, presentFactorsPerField)
+              dtProvTable = as.data.frame(presentFactorsPerField);  rownames(dtProvTable) <- fieldNames
+              DT::datatable(dtProvTable, extensions = 'Buttons',
+                            options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                           lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+              )
+            }
+          }
+        })
         ## render plot of trait distribution
         observeEvent(c(data(),input$version2Sta), { # update trait
           req(data())
           req(input$version2Sta)
-          dtSta <- data()$metadata$pheno$parameter
-          traitsSta <- setdiff(dtSta, c("trait","designation"))
+          paramsPheno <- data()$metadata$pheno
+          paramsPheno <- paramsPheno[which(!duplicated(paramsPheno$value)),]
+          paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
+          traitsSta <- setdiff(paramsPheno$parameter, c("trait","designation"))
           updateSelectInput(session, "feature", choices = traitsSta)
         })
         observeEvent(c(data(),input$version2Sta), { # update trait
@@ -344,7 +464,7 @@ mod_staApp_server <- function(id,data){
           traitsSta <- unique(dtSta$trait)
           updateSelectInput(session, "trait3Sta", choices = traitsSta)
         })
-        output$plotPredictionsCleanOut <- plotly::renderPlotly({ # update plot
+        output$plotPredictionsCleanOut <- shiny::renderPlot({ # plotly::renderPlotly({
           req(data())
           req(input$version2Sta)
           req(input$trait3Sta)
@@ -360,12 +480,16 @@ mod_staApp_server <- function(id,data){
             mydata[, "environment"] <- as.factor(mydata[, "environment"]);mydata[, "designation"] <- as.factor(mydata[, "designation"])
             mo <- data()$modifications$pheno
             mo <- mo[which(mo[,"trait"] %in% input$trait3Sta),]
-            mydata$color <- 1
-            if(nrow(mo) > 0){mydata$color[which(mydata$rowindex %in% unique(mo$row))]=2}
-            mydata$color <- as.factor(mydata$color)
-            res <- plotly::plot_ly(y = mydata[,input$trait3Sta], type = "box", boxpoints = "all", jitter = 0.3,color=mydata[,"color"],
-                                   x = mydata[,"environment"], text=mydata[,"designation"], pointpos = -1.8)
-            res = res %>% plotly::layout(showlegend = FALSE); res
+            mydata$color <- "valid"
+            if(nrow(mo) > 0){mydata$color[which(mydata$rowindex %in% unique(mo$row))]="tagged"}
+            mydata$predictedValue <- mydata[,input$trait3Sta]
+            ggplot2::ggplot(mydata, ggplot2::aes(x=as.factor(environment), y=predictedValue)) +
+              ggplot2::geom_boxplot(fill='#A4A4A4', color="black", notch = TRUE, outliers = FALSE)+
+              ggplot2::theme_classic()+
+              ggplot2::geom_jitter(ggplot2::aes(colour = color), alpha = 0.4) +
+              ggplot2::xlab("Environment") + ggplot2::ylab("Trait value") +
+              ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45)) +
+              ggplot2::scale_color_manual(values = c(valid = "#66C2A5", tagged = "#FC8D62")) # specifying colors names avoids having valid points in orange in absence of potential outliers. With only colour = color, valid points are in orange in that case.
           }else{}
         })
         ## render raw data
@@ -395,8 +519,12 @@ mod_staApp_server <- function(id,data){
     ## render result of "run" button click
     outSta <- eventReactive(input$runSta, {
       req(data())
+      req(input$version2Sta)
       req(input$trait2Sta)
       req(input$genoUnitSta)
+      req(input$genoAsFixedSta)
+      req(input$verboseSta)
+      req(input$maxitSta)
       shinybusy::show_modal_spinner('fading-circle', text = 'Processing...')
       dtSta <- data()
       myFamily = apply(xx$df,2,function(y){rownames(xx$df)[which(y > 0)[1]]})
@@ -427,7 +555,8 @@ mod_staApp_server <- function(id,data){
         if(!inherits(result,"try-error")) {
           data(result) # update data with results
           # save(result, file = "./R/outputs/resultSta.RData")
-          cat(paste("Single-trial analysis step with id:",as.POSIXct(result$status$analysisId[length(result$status$analysisId)], origin="1970-01-01", tz="GMT"),"saved."))
+          cat(paste("Single-trial analysis step with id:",as.POSIXct(result$status$analysisId[length(result$status$analysisId)], origin="1970-01-01", tz="GMT"),"saved. Please proceed to perform your multi-trial analysis using this time stamp."))
+          updateTabsetPanel(session, "tabsMain", selected = "outputTabs")
         }else{
           cat(paste("Analysis failed with the following error message: \n\n",result[[1]]))
         }
@@ -495,35 +624,68 @@ mod_staApp_server <- function(id,data){
             # }
           }
         })
-        ## report
+        ## report STA
         output$reportSta <- renderUI({
           HTML(markdown::markdownToHTML(knitr::knit(system.file("rmd","reportSta.Rmd",package="bioflow"), quiet = TRUE), fragment.only=TRUE))
         })
 
         output$downloadReportSta <- downloadHandler(
           filename = function() {
-            paste('my-report', sep = '.', switch(
+            paste('my-report-STA', sep = '.', switch(
               "HTML", PDF = 'pdf', HTML = 'html', Word = 'docx'
             ))
           },
           content = function(file) {
+            shinybusy::show_modal_spinner(spin = "fading-circle",
+                                          text = "Generating Report...")
             src <- normalizePath(system.file("rmd","reportSta.Rmd",package="bioflow"))
-            src2 <- normalizePath('data/resultSta.RData')
+            # src2 <- normalizePath('data/resultSta.RData')
 
             # temporarily switch to the temp dir, in case you do not have write
             # permission to the current working directory
             owd <- setwd(tempdir())
             on.exit(setwd(owd))
             file.copy(src, 'report.Rmd', overwrite = TRUE)
-            file.copy(src2, 'resultSta.RData', overwrite = TRUE)
+            # file.copy(src2, 'resultSta.RData', overwrite = TRUE)
             out <- rmarkdown::render('report.Rmd', params = list(toDownload=TRUE),switch(
               "HTML",
               HTML = rmarkdown::html_document()
             ))
             file.rename(out, file)
+            shinybusy::remove_modal_spinner()
           }
         )
 
+        ## report OFT
+        updateSelectInput(session, inputId = "fieldinst", choices = result$metrics$environment, selected = result$metrics$environment[1])
+
+        output$downloadReportOft <- downloadHandler(
+          filename = function() {
+            paste('my-report-OFT', sep = '.', switch(
+              "HTML", PDF = 'pdf', HTML = 'html', Word = 'docx'
+            ))
+          },
+          content = function(file) {
+            shinybusy::show_modal_spinner(spin = "fading-circle",
+                                          text = "Generating Report...")
+
+            src <- normalizePath(system.file("rmd","reportOft.Rmd",package="bioflow"))
+            # src2 <- normalizePath('data/resultSta.RData')
+
+            # temporarily switch to the temp dir, in case you do not have write
+            # permission to the current working directory
+            owd <- setwd(tempdir())
+            on.exit(setwd(owd))
+            file.copy(src, 'report2.Rmd', overwrite = TRUE)
+            # file.copy(src2, 'resultSta.RData', overwrite = TRUE)
+            out <- rmarkdown::render('report2.Rmd', params = list(fieldinst=input$fieldinst, toDownload=TRUE),switch(
+              "HTML",
+              HTML = rmarkdown::html_document()
+            ))
+            file.rename(out, file)
+            shinybusy::remove_modal_spinner()
+          }
+        )
       } else {
         output$predictionsSta <- DT::renderDT({DT::datatable(NULL)})
         output$metricsSta <- DT::renderDT({DT::datatable(NULL)})
@@ -537,9 +699,6 @@ mod_staApp_server <- function(id,data){
     output$outSta <- renderPrint({
       outSta()
     })
-
-
-
   }) ## end moduleserver
 }
 
