@@ -1,7 +1,7 @@
 ---
 title: "Population structure report"
-author: ""
-date: "2024"
+author: "Contact:<a href = 'https://github.com/Breeding-Analytics/bioflow' target = '_blank'>Breeding Analytics Team, OneCGIAR</a> breedinganalytics@cgiar.org"
+date: "`r format(Sys.time(), '%B %d, %Y')`"  
 output: html_document
 params:
 toDownload: FALSE
@@ -79,7 +79,7 @@ suppressWarnings(tryCatch({
     load("resultPopStr.RData")
   }
 }, error = function(e) {
-  
+  shinyjs::hide()
 }))
 
     seedatosum<-as.data.frame(result[["PopStr"]][["SummaryDiversityAnalysis"]])
@@ -111,7 +111,7 @@ suppressWarnings(tryCatch({
     load("resultPopStr.RData")
   }
 }, error = function(e) {
-  
+  shinyjs::hide()
 }))
 
       NAmark=result[["PopStr"]][["CalculusPerMarker"]][["%NA"]]

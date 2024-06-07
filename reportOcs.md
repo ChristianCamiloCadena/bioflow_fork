@@ -1,7 +1,7 @@
 ---
 title: "Optimal Cross Selection Report"
-author: ""
-date: "December 2023"
+author: "Contact:<a href = 'https://github.com/Breeding-Analytics/bioflow' target = '_blank'>Breeding Analytics Team, OneCGIAR</a> breedinganalytics@cgiar.org"
+date: "May 23, 2024"  
 output: html_document
 params:
  toDownload: FALSE
@@ -14,34 +14,50 @@ params:
 
 
 
+### Objectives of Optimal Cross Selection
+
+The objective of this dashboard is to help scientist to understand the following points:
+
+1. Optimal crosses for the trade off between performance and genetic variance specified
+
+2. Expected performance of crosses by parent
+
+3. Performance of parents selected to go into the crossing block
+
+4. Number of crosses proposed per parent selected to go into the crossing block
+
+5. Difference in mean and variance observed for different degree runs
+
+Understanding these data features should allow the scientist to identify which crosses should be performed in the crossing block. It should also allow the scientist to assess the relationship between the degree selected (aggressiveness) and the number of parents selected and times that each parent shows up.  
+
 ### Cross performance table
 
-The following table provides an overview of the performance of the predicted crosses for the different traits. There should be as many crosses as requested in the interface. If you requested different number of crosses or degrees, the treatment column allows you to visualize the results from different runs.
+The following table provides an overview of the performance of the predicted/proposed crosses across different traits. There should be as many crosses as requested in the interface. If you requested different number of crosses or degrees, the treatment column allows you to visualize the results from different runs.
 
 <p>&nbsp;</p>
 
-NULL
-<!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="ocsApp_1-out57616f5a68649c42" style="width:100%;height:auto;"></div><!--/html_preserve-->
+<!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="reportBuilder_1-out386d6e7049982acd" style="width:100%;height:auto;"></div><!--/html_preserve-->
 
 <p>&nbsp;</p>
 
-### Number of crosses per parent
+### Cross performance per parent
 
-The following barplot allows you identify the number of times (y-axis) that a parent (x-axis) is suggested to be used in the crossing block for a given treatment (number of crosses by degrees).
+The following boxplot allows you to see the performance of the different crosses predicted/proposed (dots in the boxplot) grouped by the different parents selected to go into the crossing block (x-axis).
 
 <p>&nbsp;</p>
-
 <!--html_preserve--><div class="form-group shiny-input-container">
-<label class="control-label" id="ocsApp_1-environ-label" for="ocsApp_1-environ">Treatment:</label>
+<label class="control-label" id="reportBuilder_1-traitFilterPredictions2D2-label" for="reportBuilder_1-traitFilterPredictions2D2">Trait:</label>
 <div>
-<select id="ocsApp_1-environ" class="shiny-input-select" multiple="multiple"><option value="desireIndex ~ 20 crosses * 30 degrees" selected>desireIndex ~ 20 crosses * 30 degrees</option></select>
-<script type="application/json" data-for="ocsApp_1-environ">{"plugins":["selectize-plugin-a11y"]}</script>
+<select id="reportBuilder_1-traitFilterPredictions2D2" class="shiny-input-select" multiple="multiple"><option value="desireIndex" selected>desireIndex</option>
+<option value="Yield_Mg_ha" selected>Yield_Mg_ha</option>
+<option value="Plant_Height_cm" selected>Plant_Height_cm</option>
+<option value="Ear_Height_cm" selected>Ear_Height_cm</option>
+<option value="general" selected>general</option></select>
+<script type="application/json" data-for="reportBuilder_1-traitFilterPredictions2D2">{"plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div><!--/html_preserve-->
 
-<!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="ocsApp_1-out9bbb9b4fd0d0f00b" style="width:100%;height:400px;"></div><!--/html_preserve-->
-
-<p>&nbsp;</p>
+<!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="reportBuilder_1-outf424c5a9eac5958c" style="width:100%;height:400px;"></div><!--/html_preserve-->
 
 ### Parent performance table
 
@@ -49,38 +65,37 @@ This table shows the performance of the parents selected by the OCS algorithm. T
 
 <p>&nbsp;</p>
 
-<!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="ocsApp_1-out2adf9520a5c5eedd" style="width:100%;height:auto;"></div><!--/html_preserve-->
+<!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="reportBuilder_1-outacf10b9cc84a799c" style="width:100%;height:auto;"></div><!--/html_preserve-->
+
+<p>&nbsp;</p>
+
+### Number of crosses per parent
+
+The following barplot allows you to assess the number of times (y-axis) that a given parent (x-axis) is suggested to be used in the crossing block for certain OCS treatment (number of crosses by degrees specifications).
+
+<p>&nbsp;</p>
+
+<!--html_preserve--><div class="form-group shiny-input-container">
+<label class="control-label" id="reportBuilder_1-environ-label" for="reportBuilder_1-environ">Treatment:</label>
+<div>
+<select id="reportBuilder_1-environ" class="shiny-input-select" multiple="multiple"><option value="desireIndex ~ 30 crosses * 30 degrees" selected>desireIndex ~ 30 crosses * 30 degrees</option></select>
+<script type="application/json" data-for="reportBuilder_1-environ">{"plugins":["selectize-plugin-a11y"]}</script>
+</div>
+</div><!--/html_preserve-->
+
+<!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="reportBuilder_1-out098cc5e0a6e18e65" style="width:100%;height:400px;"></div><!--/html_preserve-->
 
 <p>&nbsp;</p>
 
 ### Treatment comparison
 
-The following table summarizes the trait means for the different OCS runs (number of crosses and degrees treatments). 
+The following table summarizes the trait means for the different OCS runs (number of crosses and degrees treatments) in case you want to compare what would have been the resulting means and variances under different degrees or number of crosses. 
 
 <p>&nbsp;</p>
 
-<!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="ocsApp_1-out668820662fab288a" style="width:100%;height:auto;"></div><!--/html_preserve-->
+<!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="reportBuilder_1-outcbf0dd0ab9d5ea82" style="width:100%;height:auto;"></div><!--/html_preserve-->
 
 <p>&nbsp;</p>
-
-### Cross performance per parent
-
-The following boxplot allows you to see the performance of the different crosses predicted (dots in the boxplot) grouped by the different parents (x-axis).
-
-<p>&nbsp;</p>
-<!--html_preserve--><div class="form-group shiny-input-container">
-<label class="control-label" id="ocsApp_1-traitFilterPredictions2D2-label" for="ocsApp_1-traitFilterPredictions2D2">Trait:</label>
-<div>
-<select id="ocsApp_1-traitFilterPredictions2D2" class="shiny-input-select" multiple="multiple"><option value="desireIndex" selected>desireIndex</option>
-<option value="Yield_Mg_ha" selected>Yield_Mg_ha</option>
-<option value="Plant_Height_cm" selected>Plant_Height_cm</option></select>
-<script type="application/json" data-for="ocsApp_1-traitFilterPredictions2D2">{"plugins":["selectize-plugin-a11y"]}</script>
-</div>
-</div><!--/html_preserve-->
-
-<!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="ocsApp_1-out821be75e8f2c4278" style="width:100%;height:400px;"></div><!--/html_preserve-->
-
-
 
 ### References of methods used
 

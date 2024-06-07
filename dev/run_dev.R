@@ -14,5 +14,9 @@ golem::document_and_reload()
 # Run the application
 run_app()
 
+<<<<<<< HEAD
 
 
+=======
+#profvis::profvis(print(run_app()))
+>>>>>>> cfd808d972b77588e1d6e142b4cf8b64a1ec937b

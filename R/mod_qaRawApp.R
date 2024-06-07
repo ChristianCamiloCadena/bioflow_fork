@@ -11,38 +11,40 @@ mod_qaRawApp_ui <- function(id){
   ns <- NS(id)
   tagList(
 
+    tags$br(),
+
     shiny::mainPanel(width = 12,
                      tabsetPanel( id=ns("tabsMain"),
                                   type = "tabs",
 
                                   tabPanel(div(icon("book"), "Information-QA") ,
                                            br(),
-                                           shinydashboard::box(status="success",width = 12,
-                                                               solidHeader = TRUE,
-                                                               column(width=12,   style = "height:650px; overflow-y: scroll;overflow-x: scroll;",
-                                                                      column(width = 6,
-                                                                             h1(strong(span("Outlier detection", style="color:green"))),
-                                                                             h2(strong("Status:")),
-                                                                             uiOutput(ns("warningMessage")),
-                                                                             img(src = "www/qaRaw.png", height = 300, width = 700), # add an image
-                                                                      ),
-                                                                      column(width = 6, shiny::plotOutput(ns("plotDataDependencies")), ),
-                                                                      column(width = 12,
-                                                                             tags$body(
-                                                                               h2(strong("Details")),
-                                                                               p("The first step in genetic evaluation is to ensure that input phenotypic records are of good quality.
+                                           # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                           # column(width=12,   style = "height:650px; overflow-y: scroll;overflow-x: scroll;",
+                                           column(width = 6,
+                                                  h1(strong(span("Outlier detection", tags$a(href="https://www.youtube.com/watch?v=X8lYQ8_LmSg&list=PLZ0lafzH_UmclOPifjCntlMzysEB2_2wX&index=4", icon("youtube") , target="_blank")  ,style="color:darkcyan"))),
+                                                  h2(strong("Status:")),
+                                                  uiOutput(ns("warningMessage")),
+                                                  tags$br(),
+                                                  img(src = "www/qaRaw.png", height = 300, width = 700), # add an image
+                                           ),
+                                           column(width = 6, shiny::plotOutput(ns("plotDataDependencies")), ),
+                                           column(width = 12,
+                                                  tags$body(
+                                                    h2(strong("Details")),
+                                                    p("The first step in genetic evaluation is to ensure that input phenotypic records are of good quality.
                                                              This option aims to allow users to select outliers based on plot whiskers and absolute values.
                                 The way arguments are used is the following:"),
-                                                                               p(strong("Trait(s) to QA.-")," Trait(s) to apply jointly the parameter values in the grey box."),
-                                                                               p(strong("Outlier coefficient.-")," this determines how far the plot whiskers extend out from the box. If coef is positive, the whiskers extend to the most extreme data point which is no more than coef times the length of the box away from the box. A value of zero causes the whiskers to extend to the data extremes (and no outliers be returned)."),
-                                                                               h2(strong("References")),
-                                                                               p("Tukey, J. W. (1977). Exploratory Data Analysis. Section 2C."),
-                                                                               p("McGill, R., Tukey, J. W. and Larsen, W. A. (1978). Variations of box plots. The American Statistician, 32, 12–16. doi:10.2307/2683468."),
-                                                                               p("Velleman, P. F. and Hoaglin, D. C. (1981). Applications, Basics and Computing of Exploratory Data Analysis. Duxbury Press.")
-                                                                             )
-                                                                      ),
-                                                               )
-                                           )
+                                                    p(strong("Trait(s) to QA.-")," Trait(s) to apply jointly the parameter values in the grey box."),
+                                                    p(strong("Outlier coefficient.-")," this determines how far the plot whiskers extend out from the box. If coef is positive, the whiskers extend to the most extreme data point which is no more than coef times the length of the box away from the box. A value of zero causes the whiskers to extend to the data extremes (and no outliers be returned)."),
+                                                    h2(strong("References")),
+                                                    p("Tukey, J. W. (1977). Exploratory Data Analysis. Section 2C."),
+                                                    p("McGill, R., Tukey, J. W. and Larsen, W. A. (1978). Variations of box plots. The American Statistician, 32, 12–16. doi:10.2307/2683468."),
+                                                    p("Velleman, P. F. and Hoaglin, D. C. (1981). Applications, Basics and Computing of Exploratory Data Analysis. Duxbury Press.")
+                                                  )
+                                           ),
+                                           # )
+                                           # )
                                   ),
                                   tabPanel(div(icon("arrow-right-to-bracket"), "Input"),
                                            tabsetPanel(
@@ -51,39 +53,48 @@ mod_qaRawApp_ui <- function(id){
                                                       column(width=12, style = "background-color:grey; color: #FFFFFF",
                                                              column(width=6, selectInput(ns("traitOutqPhenoMultiple"), "Trait(s) to QA", choices = NULL, multiple = TRUE) ),
                                                              column(width=2,numericInput(ns("outlierCoefOutqPheno"), label = "IQR coefficient", value = 2.5) ),
+                                                             column(width=4, tags$br(),
+                                                                    shinyWidgets::prettySwitch( inputId = ns('launch'), label = "Load example", status = "success"),
+                                                                    ),
                                                       ),
                                                       column(width=12,
                                                              hr(style = "border-top: 3px solid #4c4c4c;"),
                                                              h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
                                                              hr(style = "border-top: 3px solid #4c4c4c;"),
                                                       ),
-                                                      shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
-                                                                          column(width=12, style = "height:475px; overflow-y: scroll;overflow-x: scroll;",
-                                                                                 p(span("Preview of outliers that would be tagged using current input parameters above for the trait selected.", style="color:black")),
-                                                                                 column(width=4, selectInput(ns("traitOutqPheno"), "", choices = NULL, multiple = FALSE) ),
-                                                                                 column(width=4, numericInput(ns("transparency"),"Plot transparency",value=0.6, min=0, max=1, step=0.1) ),
-                                                                                 column(width=4, numericInput(ns("outlierCoefOutqFont"), label = "x-axis font size", value = 12, step=1) ),
-                                                                                 column(width=12, shiny::plotOutput(ns("plotPredictionsCleanOut")) ), # plotly::plotlyOutput(ns("plotPredictionsCleanOut")),
-                                                                                 column(width=12,
-                                                                                        p(span("Table preview of outliers that would be tagged using current input parameters above for the trait selected.", style="color:black")),
-                                                                                        DT::DTOutput(ns("modificationsQa")),
-                                                                                 )
-                                                                          )
+                                                      # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                                      # column(width=12, style = "height:475px; overflow-y: scroll;overflow-x: scroll;",
+                                                      # p(span("Preview of outliers that would be tagged using current input parameters above for the trait selected.", style="color:black")),
+                                                      tags$span(id = ns('holder'),
+                                                                column(width=4, selectInput(ns("traitOutqPheno"), "Trait to visualize", choices = NULL, multiple = FALSE) ),
+                                                                column(width=3, numericInput(ns("transparency"),"Plot transparency",value=0.6, min=0, max=1, step=0.1) ),
+                                                                column(width=3, numericInput(ns("outlierCoefOutqFont"), label = "x-axis font size", value = 12, step=1) ),
+                                                                column(width=2, checkboxInput(ns("checkbox"), label = "Include x-axis labels", value = TRUE) ),
                                                       ),
+                                                      column(width=12, shiny::plotOutput(ns("plotPredictionsCleanOut")) ), # plotly::plotlyOutput(ns("plotPredictionsCleanOut")),
+                                                      column(width=12,
+                                                             # p(span("Table preview of outliers that would be tagged using current input parameters above for the trait selected.", style="color:black")),
+                                                             DT::DTOutput(ns("modificationsQa")),
+                                                      )
+                                                      # )
+                                                      # ),
                                              ),
                                              tabPanel("Run analysis", icon = icon("play"),
+                                                      column(width=12,style = "background-color:grey; color: #FFFFFF",
                                                       br(),
                                                       actionButton(ns("runQaRaw"), "Tag outliers", icon = icon("play-circle")),
+                                                      br(),
+                                                      br(),
+                                                      ),
                                                       textOutput(ns("outQaRaw")),
                                              ),
                                            ) # end of tabset
                                   ),# end of input panel
                                   tabPanel(div(icon("arrow-right-from-bracket"), "Output" ) , value = "outputTabs",
                                            tabsetPanel(
-                                             tabPanel("Report", icon = icon("file-image"),
+                                             tabPanel("Dashboard", icon = icon("file-image"),
                                                       br(),
-                                                      div(tags$p("Please download the report below:") ),
-                                                      downloadButton(ns("downloadReportQaPheno"), "Download report"),
+                                                      downloadButton(ns("downloadReportQaPheno"), "Download dashboard"),
                                                       br(),
                                                       uiOutput(ns('reportQaPheno'))
                                              ),
@@ -108,6 +119,17 @@ mod_qaRawApp_server <- function(id, data){
       hideAll$clearAll <- TRUE
     })
     ############################################################################
+    # show shinyWidgets until the user can use the module
+    observeEvent(c(data()), {
+      req(data())
+      mappedColumns <- length(which(c("environment","designation","trait") %in% data()$metadata$pheno$parameter))
+      if(mappedColumns == 3){
+        golem::invoke_js('showid', ns('holder'))
+      }else{
+        golem::invoke_js('hideid', ns('holder'))
+      }
+    })
+    ######################################
     # warning message
     output$warningMessage <- renderUI(
       if(is.null(data())){
@@ -119,6 +141,40 @@ mod_qaRawApp_server <- function(id, data){
         }
       }
     )
+    ## data example loading
+    observeEvent(
+      input$launch,
+      if(length(input$launch) > 0){
+        if (input$launch) {
+          shinyWidgets::ask_confirmation(
+            inputId = ns("myconfirmation"),
+            text = "Are you sure you want to load the example data? This will delete any data currently in the environment.",
+            title = "Data replacement warning"
+          )
+        }
+      }
+    )
+    observeEvent(input$myconfirmation, {
+      if (isTRUE(input$myconfirmation)) {
+        shinybusy::show_modal_spinner('fading-circle', text = 'Loading example...')
+        ## replace tables
+        data(cgiarBase::create_getData_object())
+        tmp <- data()
+        utils::data(DT_example, package = "cgiarPipeline")
+        if(!is.null(result$data)){tmp$data <- result$data}
+        if(!is.null(result$metadata)){tmp$metadata <- result$metadata}
+        if(!is.null(result$modifications)){tmp$modifications <- result$modifications}
+        if(!is.null(result$predictions)){tmp$predictions <- result$predictions}
+        if(!is.null(result$metrics)){tmp$metrics <- result$metrics}
+        if(!is.null(result$modeling)){tmp$modeling <- result$modeling}
+        if(!is.null(result$status)){tmp$status <- result$status}
+        data(tmp) # update data with results
+        shinybusy::remove_modal_spinner()
+      }else{
+        shinyWidgets::updatePrettySwitch(session, "launch", value = FALSE)
+      }
+    }, ignoreNULL = TRUE)
+
     # Create the fields
     observeEvent(data(), {
       req(data())
@@ -151,14 +207,19 @@ mod_qaRawApp_server <- function(id, data){
         mydata$color <- "valid"
         if(nrow(mo) > 0){mydata$color[which(mydata$rowindex %in% unique(mo$row))]="tagged"}
         mydata$predictedValue <- mydata[,input$traitOutqPheno]
-        ggplot2::ggplot(mydata, ggplot2::aes(x=as.factor(environment), y=predictedValue)) +
+        mydata <- mydata[,which(!duplicated(colnames(mydata)))]
+        p <- ggplot2::ggplot(mydata, ggplot2::aes(x=as.factor(environment), y=predictedValue)) +
           ggplot2::geom_boxplot(fill='#A4A4A4', color="black", notch = TRUE, outliers = FALSE)+
-          ggplot2::theme_classic()+
+          ggplot2::theme_classic()+ ggplot2::ggtitle("Preview of outliers that would be tagged using current input parameters above for the trait selected") +
           ggplot2::geom_jitter(ggplot2::aes(color = color), alpha = input$transparency) +
           ggplot2::xlab("Environment") + ggplot2::ylab("Trait value") +
-          ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45)) +
           ggplot2::scale_color_manual(values = c(valid = "#66C2A5", tagged = "#FC8D62")) # specifying colors names avoids having valid points in orange in absence of potential outliers. With only colour = color, valid points are in orange in that case.
-
+        if(input$checkbox){
+          p <- p + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, vjust = 1))
+        }else{
+          p <- p + ggplot2::theme(axis.text.x = ggplot2::element_blank())
+        }
+        p
       }else{}
     })
 
@@ -191,8 +252,8 @@ mod_qaRawApp_server <- function(id, data){
           myTable <- myTable[!duplicated(myTable$record),]
           DT::datatable(myTable, filter = "top", # extensions = 'Buttons',
                         caption = htmltools::tags$caption(
-                          style = 'color:orange', #caption-side: bottom; text-align: center;
-                          htmltools::em('Please check potentiels outliers and click on relevant data points to keep them in the workflow.')
+                          style = 'color:cadetblue', #caption-side: bottom; text-align: center;
+                          htmltools::em('Please check potential outliers and click on relevant data points to keep them in the workflow.')
                         )
           )
         }
@@ -366,7 +427,8 @@ mod_qaRawApp_server <- function(id, data){
               file.copy(src2, 'resultQaPheno.RData', overwrite = TRUE)
               out <- rmarkdown::render('report.Rmd', params = list(toDownload=TRUE),switch(
                 "HTML",
-                HTML = rmarkdown::html_document()
+                HTML = rmdformats::robobook(toc_depth = 4)
+                # HTML = rmarkdown::html_document()
               ))
               file.rename(out, file)
             }

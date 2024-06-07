@@ -31,11 +31,10 @@ mod_qaStaApp_ui <- function(id){
                        type = "tabs",
                        tabPanel(div(icon("book"), "Information-QA-MB") ,
                                 br(),
-                                shinydashboard::box(status="success",width = 12,
-                                                    solidHeader = TRUE,
+                                # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
                                                     column(width=12,   style = "height:660px; overflow-y: scroll;overflow-x: scroll;",
                                                            tags$body(
-                                                             h1(strong(span("Model-based outlier detection", style="color:green"))),
+                                                             h1(strong(span("Model-based outlier detection", style="color:darkcyan"))),
                                                              h2(strong("Status:")),
                                                              uiOutput(ns("warningMessage")),
                                                              h2(strong("Details")),
@@ -52,7 +51,7 @@ mod_qaStaApp_ui <- function(id){
                                                            )
                                                     ),
 
-                                )
+                                # )
                        ),
                        tabPanel(div(icon("arrow-right-to-bracket"), "Input"),
                                 tabsetPanel(
@@ -60,15 +59,18 @@ mod_qaStaApp_ui <- function(id){
                                            br(),
                                            column(width=12, style = "background-color:grey; color: #FFFFFF",
                                                   column(width=6, selectInput(ns("traitOutqPhenoMultiple"), "Trait to QA", choices = NULL, multiple = TRUE) ),
-                                                  column(width=2, numericInput(ns("outlierCoefOutqPheno"), label = "Outlier coefficient", value = 5) ),
+                                                  column(width=3, numericInput(ns("outlierCoefOutqPheno"), label = "Outlier coefficient", value = 5) ),
+                                                  column(width=3, tags$br(),
+                                                         shinyWidgets::prettySwitch( inputId = ns('launch'), label = "Load example", status = "success"),
+                                                  ),
                                            ),
                                            column(width=12,
                                                   hr(style = "border-top: 3px solid #4c4c4c;"),
                                                   h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
                                                   hr(style = "border-top: 3px solid #4c4c4c;"),
                                            ),
-                                           shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
-                                                               column(width=12, style = "height:470px; overflow-y: scroll;overflow-x: scroll;",
+                                           # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                           #                     column(width=12, style = "height:470px; overflow-y: scroll;overflow-x: scroll;",
                                                                       p(span("Preview of outliers that would be tagged using current input parameters above for trait selected.", style="color:black")),
                                                                       selectInput(ns("traitOutqPheno2"), "", choices = NULL, multiple = FALSE),
                                                                       shiny::plotOutput(ns("plotPredictionsCleanOut")), # plotly::plotlyOutput(ns("plotPredictionsCleanOut")),
@@ -76,8 +78,8 @@ mod_qaStaApp_ui <- function(id){
                                                                                           numericInput(ns("outlierCoefOutqFont"), label = "x-axis font size", value = 12, step=1)
                                                                       ),
                                                                       DT::DTOutput(ns("modificationsQa"))
-                                                               ),
-                                           )
+                                           #                     ),
+                                           # )
                                   ),
                                   tabPanel("Run analysis", icon = icon("play"),
                                            br(),
@@ -88,10 +90,9 @@ mod_qaStaApp_ui <- function(id){
                        ),# end of input panel
                        tabPanel(div(icon("arrow-right-from-bracket"), "Output" ) , value = "outputTabs",
                                 tabsetPanel(
-                                  tabPanel("Report", icon = icon("file-image"),
+                                  tabPanel("Dashboard", icon = icon("file-image"),
                                            br(),
-                                           div(tags$p("Please download the report below:") ),
-                                           downloadButton(ns("downloadReportQaPheno"), "Download report"),
+                                           downloadButton(ns("downloadReportQaPheno"), "Download dashboard"),
                                            br(),
                                            uiOutput(ns('reportQaPheno'))
                                   ),
@@ -129,6 +130,39 @@ mod_qaStaApp_server <- function(id, data){
         }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please make sure that you have computed the 'environment' column, and that column 'designation' and \n at least one trait have been mapped using the 'Data Retrieval' tab.")) )}
       }
     )
+    ## data example loading
+    observeEvent(
+      input$launch,
+      if(length(input$launch) > 0){
+        if (input$launch) {
+          shinyWidgets::ask_confirmation(
+            inputId = ns("myconfirmation"),
+            text = "Are you sure you want to load the example data? This will delete any data currently in the environment.",
+            title = "Data replacement warning"
+          )
+        }
+      }
+    )
+    observeEvent(input$myconfirmation, {
+      if (isTRUE(input$myconfirmation)) {
+        shinybusy::show_modal_spinner('fading-circle', text = 'Loading example...')
+        ## replace tables
+        data(cgiarBase::create_getData_object())
+        tmp <- data()
+        utils::data(DT_example, package = "cgiarPipeline")
+        if(!is.null(result$data)){tmp$data <- result$data}
+        if(!is.null(result$metadata)){tmp$metadata <- result$metadata}
+        if(!is.null(result$modifications)){tmp$modifications <- result$modifications}
+        if(!is.null(result$predictions)){tmp$predictions <- result$predictions}
+        if(!is.null(result$metrics)){tmp$metrics <- result$metrics}
+        if(!is.null(result$modeling)){tmp$modeling <- result$modeling}
+        if(!is.null(result$status)){tmp$status <- result$status}
+        data(tmp) # update data with results
+        shinybusy::remove_modal_spinner()
+      }else{
+        shinyWidgets::updatePrettySwitch(session, "launch", value = FALSE)
+      }
+    }, ignoreNULL = TRUE)
     # Create the fields
     observeEvent(data(), {
       req(data())
@@ -283,7 +317,8 @@ mod_qaStaApp_server <- function(id, data){
               file.copy(src2, 'resultQaPheno.RData', overwrite = TRUE)
               out <- rmarkdown::render('report.Rmd', params = list(toDownload=TRUE),switch(
                 "HTML",
-                HTML = rmarkdown::html_document()
+                HTML = rmdformats::robobook(toc_depth = 4)
+                # HTML = rmarkdown::html_document()
               ))
               file.rename(out, file)
             }

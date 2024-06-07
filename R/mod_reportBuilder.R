@@ -1,4 +1,4 @@
-#' abiDashboard UI Function
+#' reportBuilder UI Function
 #'
 #' @description A shiny Module.
 #'
@@ -7,7 +7,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-mod_abiDashboard_ui <- function(id){
+mod_reportBuilder_ui <- function(id){
   ns <- NS(id)
   tagList(
 
@@ -16,11 +16,11 @@ mod_abiDashboard_ui <- function(id){
                            type = "tabs",
                            tabPanel(div(icon("arrow-right-to-bracket"), "Input"),
                                     tabsetPanel(
-                                      tabPanel("Pick time stamps", icon = icon("magnifying-glass-chart"),
+                                      tabPanel("Pick module and timestamp", icon = icon("magnifying-glass-chart"),
                                                br(),
                                                column(width=12,
-                                                      column(width=5,  selectInput(ns("versionSelection"), "OCS analysis (to trace selection history)", choices = NULL, multiple = FALSE) ),
-                                                      column(width=5,  selectInput(ns("versionHistory"), "RGG analysis (to link gain)", choices = NULL, multiple = FALSE) ),
+                                                      column(width=5,  selectInput(ns("module"), "Module report", choices = NULL, multiple = FALSE) ),
+                                                      column(width=5,  selectInput(ns("timestamp"), "Time stamp", choices = NULL, multiple = FALSE) ),
                                                       column(width=2, tags$br(),
                                                              shinyWidgets::prettySwitch( inputId = ns('launch'), label = "Load example", status = "success"),
                                                       ),
@@ -30,18 +30,15 @@ mod_abiDashboard_ui <- function(id){
                                                hr(style = "border-top: 3px solid #4c4c4c;"),
                                                # shinydashboard::box(status="success",width = 12, style = "height:460px; overflow-y: scroll;overflow-x: scroll;", solidHeader = TRUE,
                                                #                     column(width=12,
-                                               # p(span("Current analyses available.", style="color:black")),
-                                               shiny::plotOutput(ns("plotTimeStamps")),
-                                               # p(span("Data used as input.", style="color:black")),
-                                               # DT::DTOutput(ns("phenoAbi")),
+                                                                          # p(span("Current analyses available.", style="color:black")),
+                                                                          shiny::plotOutput(ns("plotTimeStamps")),
                                                #                     )
                                                # ),
                                       ),
                                       tabPanel("Build dashboard", icon = icon("play"),
                                                br(),
-                                               actionButton(ns("runAbi"), "Build dashboard", icon = icon("play-circle")),
-                                               uiOutput(ns("qaQcAbiInfo")),
-                                               textOutput(ns("outAbi")),
+                                               actionButton(ns("runReport"), "Build dashboard", icon = icon("play-circle")),
+                                               textOutput(ns("outReport")),
                                       ),
                                     )
                            ),
@@ -49,21 +46,35 @@ mod_abiDashboard_ui <- function(id){
                                     tabsetPanel(
                                       tabPanel("Dashboard", icon = icon("file-image"),
                                                br(),
-                                               downloadButton(ns("downloadReportAbi"), "Download dashboard"),
+                                               downloadButton(ns("downloadReportReport"), "Download dashboard"),
                                                br(),
-                                               uiOutput(ns('reportAbi'))
-                                      )
+                                               uiOutput(ns('reportReport'))
+                                      ),
+                                      tabPanel("Predictions", icon = icon("table"),
+                                               br(),
+                                               DT::DTOutput(ns("predictionsX")),
+                                      ),
+                                      tabPanel("Metrics", icon = icon("table"),
+                                               br(),
+                                               DT::DTOutput(ns("metricsX")),
+                                      ),
+                                      tabPanel("Modeling", icon = icon("table"),
+                                               br(),
+                                               DT::DTOutput(ns("modelingX")),
+                                      ),
                                     )
                            )
               )) # end mainpanel
 
+
+
   )
 }
 
-#' abiDashboard Server Functions
+#' reportBuilder Server Functions
 #'
 #' @noRd
-mod_abiDashboard_server <- function(id, data){
+mod_reportBuilder_server <- function(id, data){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
@@ -72,8 +83,30 @@ mod_abiDashboard_server <- function(id, data){
     observeEvent(data(), {
       hideAll$clearAll <- TRUE
     })
-    ############################################################################
+
     #################
+    ## model types
+    observeEvent(c(data()), {
+      req(data()) # list(QA="qaRaw" , QAmarkers="qaGeno" , STA="sta" ,   MTA="mta",    Index="indexD", OCS="ocs",    RGG="rgg" ,   PGG="pgg" )
+      if(!is.null(data()$status)){
+        traitsBuilder <- unique(data()$status$module)
+        names(traitsBuilder) <- cgiarBase::replaceValues(Source = traitsBuilder, Search = c("qaRaw","qaGeno","sta","mta","indexD","ocs","rgg","pgg" ) , Replace = c("QA phenotypes (qaRaw)", "QA genotypes (qaGeno)", "Single Trial Analysis (sta)", "Multi Trial Analysis (mta)", "Selection Index (indexD)", "Optimal Cross Selection (ocs)", "Realized Genetic Gain (rgg)", "Predicted Genetic Gain (pgg)") )
+        updateSelectInput(session, "module", choices = traitsBuilder )
+      }
+    })
+
+    observeEvent(c(data(), input$module), {
+      req(data())
+      req(input$module)
+      if(!is.null(data()$status)){
+        status <- data()$status
+        status <- status[status$module == input$module, ]
+        traitsBuilder <- status$analysisId
+        if(length(traitsBuilder) > 0){names(traitsBuilder) <- as.POSIXct(traitsBuilder, origin="1970-01-01", tz="GMT")}
+        updateSelectInput(session, "timestamp", choices =traitsBuilder  )
+      }
+    })
+
     ## data example loading
     observeEvent(
       input$launch,
@@ -107,30 +140,6 @@ mod_abiDashboard_server <- function(id, data){
         shinyWidgets::updatePrettySwitch(session, "launch", value = FALSE)
       }
     }, ignoreNULL = TRUE)
-
-    ## versions to use
-    observeEvent(c(data()), {
-      req(data())
-      dtAbi <- data()
-      dtAbi <- dtAbi$status
-      if(!is.null(dtAbi)){
-        dtAbi <- dtAbi[which(dtAbi$module %in% c("ocs")),]
-        traitsAbi <- unique(dtAbi$analysisId)
-        if(length(traitsAbi) > 0){names(traitsAbi) <- as.POSIXct(traitsAbi, origin="1970-01-01", tz="GMT")}
-        updateSelectInput(session, "versionSelection", choices = traitsAbi)
-      }
-    })
-    observeEvent(c(data()), {
-      req(data())
-      dtAbi <- data()
-      dtAbi <- dtAbi$status
-      if(!is.null(dtAbi)){
-        dtAbi <- dtAbi[which(dtAbi$module %in% c("rgg")),]
-        traitsAbi <- unique(dtAbi$analysisId)
-        if(length(traitsAbi) > 0){names(traitsAbi) <- as.POSIXct(traitsAbi, origin="1970-01-01", tz="GMT")}
-        updateSelectInput(session, "versionHistory", choices = traitsAbi)
-      }
-    })
 
     ## render timestamps flow
     output$plotTimeStamps <- shiny::renderPlot({
@@ -171,10 +180,10 @@ mod_abiDashboard_server <- function(id, data){
         library(ggnetwork)
         ggplot2::ggplot(n, ggplot2::aes(x = x, y = y, xend = xend, yend = yend)) +
           ggnetwork::geom_edges(ggplot2::aes(color = family), arrow = ggplot2::arrow(length = ggnetwork::unit(6, "pt"), type = "closed") ) +
-          ggnetwork::geom_nodes(ggplot2::aes(color = family), alpha = 0.5, size=5 ) +
+          ggnetwork::geom_nodes(ggplot2::aes(color = family), alpha = 0.5, size=5 ) + ggplot2::ggtitle("Current analyses available") +
           ggnetwork::geom_nodelabel_repel(ggplot2::aes(color = family, label = vertex.names ),
                                           fontface = "bold", box.padding = ggnetwork::unit(1, "lines")) +
-          ggnetwork::theme_blank() + ggplot2::ggtitle("Network plot of current analyses available")
+          ggnetwork::theme_blank()
       }
     })
 
@@ -182,24 +191,23 @@ mod_abiDashboard_server <- function(id, data){
     ### ANALYSIS
 
     ## render result of "run" button click
-    outAbi <- eventReactive(input$runAbi, {
+    outReport <- eventReactive(input$runReport, {
       req(data())
-      # req(input$versionMetrics) # minimum requirements for the dashboard is the data and sta
+      req(input$module) # minimum requirements for the dashboard is the data and sta
+      req(input$timestamp)
+      ## start
       shinybusy::show_modal_spinner('fading-circle', text = 'Processing...')
       result <- data()
-      idAbi <- as.numeric(Sys.time())
-      abiModeling <- data.frame(module="abiDash", analysisId=idAbi, trait="inputObject", environment=NA,
-                                parameter= c( "ocs", "rgg") , # "sta", "mta","indexD",
-                                value=c(input$versionSelection, input$versionHistory ) # input$versionMetrics, input$versionTraits, input$versionIndex,
-      )
-      abiStatus <- data.frame(module="abiDash", analysisId=idAbi)
-      result$modeling <- rbind(result$modeling, abiModeling)
-      result$status <- rbind(result$status, abiStatus)
-
+      moveTotheEnd <- which(result$status$analysisId == input$timestamp)
+      keepAtTop <- setdiff(1:nrow(result$status), moveTotheEnd)
+      result$status <- result$status[c(keepAtTop,moveTotheEnd),]
+      markdownType <- cgiarBase::replaceValues(Source = input$module, Search = c("qaRaw","qaGeno","sta","mta","indexD","ocs","rgg","pgg" ) , Replace = c("reportQaPheno.Rmd","reportQaGeno.Rmd","reportSta.Rmd","reportMta.Rmd","reportIndex.Rmd","reportOcs.Rmd","reportRgg.Rmd","reportPgg.Rmd") )
+      resultType <- cgiarBase::replaceValues(Source = input$module, Search = c("qaRaw","qaGeno","sta","mta","indexD","ocs","rgg","pgg" ) , Replace = c("resultQaPheno.RData","resultQaGeno.RData","resultSta.RData","resultMta.RData","resultIndex.RData","resultOcs.RData","resultRgg.RData","resultPgg.RData") )
+      ## end
       shinybusy::remove_modal_spinner()
       if(!inherits(result,"try-error")) {
         data(result) # update data with results
-        cat("Data ready for dashboard. Please go to the report tab.")
+        cat("Report ready. Please go to the report tab.")
         updateTabsetPanel(session, "tabsMain", selected = "outputTabs")
       }else{
         cat(paste("Analysis failed with the following error message: \n\n",result[[1]]))
@@ -208,26 +216,79 @@ mod_abiDashboard_server <- function(id, data){
 
       if(!inherits(result,"try-error")) {
 
-        ## Report tab
-        output$reportAbi <- renderUI({
-          HTML(markdown::markdownToHTML(knitr::knit(system.file("rmd","reportAbi.Rmd",package="bioflow"), quiet = TRUE), fragment.only=TRUE))
+        ## predictions table
+        output$predictionsX <-  DT::renderDT({
+          predictions <- result$predictions
+          current.predictions <- predictions[predictions$analysisId == result$status$analysisId[nrow(result$status)] ,]
+          if(nrow(current.predictions) > 0){
+            current.predictions <- subset(current.predictions, select = -c(module,analysisId))
+            numeric.output <- c("predictedValue", "stdError", "reliability")
+            DT::formatRound(DT::datatable(current.predictions, extensions = 'Buttons',
+                                          options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                         lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+            ), numeric.output)
+          }else{
+            DT::datatable(data.frame(), extensions = 'Buttons',
+                          options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                         lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+            )
+          }
+        })
+        # metrics table
+        output$metricsX <-  DT::renderDT({
+          if(!inherits(result,"try-error") ){
+            metrics <- result$metrics
+            metrics <- metrics[which(metrics$analysisId == result$status$analysisId[nrow(result$status)] ),]
+            if(nrow(metrics) > 0){
+              metrics <- subset(metrics, select = -c(module,analysisId))
+              numeric.output <- c("value", "stdError")
+              DT::formatRound(DT::datatable(metrics, extensions = 'Buttons',
+                                            options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                           lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+              ), numeric.output)
+            }else{
+              DT::datatable(data.frame(), extensions = 'Buttons',
+                            options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                           lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+              )
+            }
+          }
+        })
+        # modeling table
+        output$modelingX <-  DT::renderDT({
+          if(!inherits(result,"try-error") ){
+            modeling <- result$modeling
+            modeling <- modeling[which(modeling$analysisId == result$status$analysisId[nrow(result$status)] ),]
+            if(nrow(modeling) > 0){
+              modeling <- subset(modeling, select = -c(module,analysisId))
+            }else{modeling <- data.frame()}
+            DT::datatable(modeling, extensions = 'Buttons',
+                          options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                         lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+            )
+          }
         })
 
-        output$downloadReportAbi <- downloadHandler(
+        ## Report tab
+        output$reportReport <- renderUI({
+          HTML(markdown::markdownToHTML(knitr::knit(system.file("rmd",markdownType,package="bioflow"), quiet = TRUE), fragment.only=TRUE))
+        })
+
+        output$downloadReportReport <- downloadHandler(
           filename = function() {
             paste('my-report', sep = '.', switch(
               "HTML", PDF = 'pdf', HTML = 'html', Word = 'docx'
             ))
           },
           content = function(file) {
-            src <- normalizePath(system.file("rmd","reportAbi.Rmd",package="bioflow"))
-            src2 <- normalizePath('data/resultAbi.RData')
+            src <- normalizePath(system.file("rmd",markdownType,package="bioflow"))
+            src2 <- normalizePath(paste0('data/',resultType))
             # temporarily switch to the temp dir, in case you do not have write
             # permission to the current working directory
             owd <- setwd(tempdir())
             on.exit(setwd(owd))
             file.copy(src, 'report.Rmd', overwrite = TRUE)
-            file.copy(src2, 'resultAbi.RData', overwrite = TRUE)
+            file.copy(src2, resultType, overwrite = TRUE)
             out <- rmarkdown::render('report.Rmd',
                                      params = list(toDownload=TRUE ),
                                      switch(
@@ -247,15 +308,17 @@ mod_abiDashboard_server <- function(id, data){
 
     }) ## end eventReactive
 
-    output$outAbi <- renderPrint({
-      outAbi()
+
+    output$outReport <- renderPrint({
+      outReport()
     })
+
 
   })
 }
 
 ## To be copied in the UI
-# mod_abiDashboard_ui("abiDashboard_1")
+# mod_reportBuilder_ui("reportBuilder_1")
 
 ## To be copied in the server
-# mod_abiDashboard_server("abiDashboard_1")
+# mod_reportBuilder_server("reportBuilder_1")

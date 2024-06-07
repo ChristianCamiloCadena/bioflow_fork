@@ -11,72 +11,75 @@ mod_rggApp_ui <- function(id){
   ns <- NS(id)
   tagList(
 
+    tags$br(),
+
     mainPanel( width = 12,
                tabsetPanel( id=ns("tabsMain"),
                             type = "tabs",
                             tabPanel(div(icon("book"), "Information-RGG") ,
                                      br(),
-                                     shinydashboard::box(status="success",width = 12,
-                                                         solidHeader = TRUE,
-                                                         column(width=12,   style = "height:580px; overflow-y: scroll;overflow-x: scroll;",
-                                                                column(width = 6,
-                                                                       h1(strong(span("Realized Genetic Gain", style="color:green"))),
-                                                                       h2(strong("Status:")),
-                                                                       uiOutput(ns("warningMessage")),
-                                                                ),
-                                                                column(width = 6, shiny::plotOutput(ns("plotDataDependencies")), ),
-                                                                column(width = 12,
-                                                                       h2(strong("Details")),
-                                                                       p("In order to monitor the efficacy of genetic evaluation across cycles of selection, the realized genetic gain is the preferred process.
+                                     # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                     #                     column(width=12,   style = "height:580px; overflow-y: scroll;overflow-x: scroll;",
+                                     column(width = 6,
+                                            h1(strong(span("Realized Genetic Gain", tags$a(href="https://www.youtube.com/watch?v=5kkS98iJECs&list=PLZ0lafzH_UmclOPifjCntlMzysEB2_2wX&index=10", icon("youtube") , target="_blank"), style="color:darkcyan"))),
+                                            h2(strong("Status:")),
+                                            uiOutput(ns("warningMessage")),
+                                     ),
+                                     column(width = 6, shiny::plotOutput(ns("plotDataDependencies")), ),
+                                     column(width = 12,
+                                            h2(strong("Details")),
+                                            p("In order to monitor the efficacy of genetic evaluation across cycles of selection, the realized genetic gain is the preferred process.
                                           This option aims to calculate the realized genetic gain using the methods from Mackay et al. (2011). The
                               method uses across-environment means from multiple years of data that have been adjusted based on a good connectivity
                               to then fit a regression of the form means~year.of.origin. In case the means used are BLUPs these can be
                               deregressed.
                                 The way the options are used is the following:"),
-                                                                       p(strong("Method.-")," One of the following; Mackay et al. (2011) or Laidig et al. (2014)."),
-                                                                       p(strong("Trait(s) to use.-")," Trait to be be used for realized genetic gain estimation (an index is suggested)."),
-                                                                       p(strong("Years of origin to use.-")," Selection of the years of origin associated to the tested material to use in the calculation."),
-                                                                       p(strong("Entry types to use.-")," A selection of entry types to use for the realized genetic gain calculation."),
-                                                                       p(strong("Deregress weight.-")," Should any weight be applied to the deregressed value (not recommended but available)."),
-                                                                       p(strong("Partition the data?.-")," When very few years of data are present this option will allow the user to calculate the gain for all 2-year combinations and then average these rates."),
-                                                                       p(strong("Deregress estimates-")," Should we deregress the estimates by dividing over the reliability before performing the realized genetic gain calculation."),
-                                                                       h2(strong("References:")),
-                                                                       p("Mackay, I., Horwell, A., Garner, J., White, J., McKee, J., & Philpott, H. (2011). Reanalyses of the historical series of UK variety trials
+                                            p(strong("Method.-")," One of the following; Mackay et al. (2011) or Laidig et al. (2014)."),
+                                            p(strong("Trait(s) to use.-")," Trait to be be used for realized genetic gain estimation (an index is suggested)."),
+                                            p(strong("Years of origin to use.-")," Selection of the years of origin associated to the tested material to use in the calculation."),
+                                            p(strong("Entry types to use.-")," A selection of entry types to use for the realized genetic gain calculation."),
+                                            p(strong("Deregress weight.-")," Should any weight be applied to the deregressed value (not recommended but available)."),
+                                            p(strong("Partition the data?.-")," When very few years of data are present this option will allow the user to calculate the gain for all 2-year combinations and then average these rates."),
+                                            p(strong("Deregress estimates-")," Should we deregress the estimates by dividing over the reliability before performing the realized genetic gain calculation."),
+                                            h2(strong("References:")),
+                                            p("Mackay, I., Horwell, A., Garner, J., White, J., McKee, J., & Philpott, H. (2011). Reanalyses of the historical series of UK variety trials
                                 to quantify the contributions of genetic and environmental factors to trends and variability in yield over time. Theoretical and Applied
                                 Genetics, 122, 225-238."),
-                                                                       p("Laidig, F., Piepho, H. P., Drobek, T., & Meyer, U. (2014). Genetic and non-genetic long-term trends of 12 different crops in German
+                                            p("Laidig, F., Piepho, H. P., Drobek, T., & Meyer, U. (2014). Genetic and non-genetic long-term trends of 12 different crops in German
                                 official variety performance trials and on-farm yield trends. Theoretical and Applied Genetics, 127, 2599-2617."),
-                                                                       h2(strong("Software used:")),
-                                                                       p("R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing,
+                                            h2(strong("Software used:")),
+                                            p("R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing,
                                 Vienna, Austria. URL https://www.R-project.org/."),
-                                                                ),
-                                                         )
-                                     )
+                                     ),
+                                     #                     )
+                                     # )
                             ),
                             tabPanel(div(icon("arrow-right-to-bracket"), "Input"),
                                      tabsetPanel(
-                                       tabPanel("Pick Index-stamp", icon = icon("table"),
+                                       tabPanel("Pick Index-stamp", icon = icon("dice-one"),
                                                 br(),
                                                 column(width=12, style = "background-color:grey; color: #FFFFFF",
                                                        column(width=6, selectInput(ns("version2Rgg"), "Data version to analyze", choices = NULL, multiple = FALSE) ),
-                                                       column(width=6, radioButtons(ns("methodRgg"),"Method",choices=list("Mackay"="mackay","Piepho"="piepho"), selected="mackay") ),
+                                                       column(width=3, radioButtons(ns("methodRgg"),"Method",choices=list("Mackay"="mackay","Piepho"="piepho"), selected="mackay") ),
+                                                       column(width=3, tags$br(),
+                                                              shinyWidgets::prettySwitch( inputId = ns('launch'), label = "Load example", status = "success"),
+                                                       ),
                                                 ),
                                                 column(width=12,
                                                        hr(style = "border-top: 3px solid #4c4c4c;"),
                                                        h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
                                                        hr(style = "border-top: 3px solid #4c4c4c;"),
                                                 ),
-                                                shinydashboard::box(status="success",width = 12, style = "height:460px; overflow-y: scroll;overflow-x: scroll;",
-                                                                    solidHeader = TRUE,
-                                                                    column(width=12,
-                                                                           p(span("Network plot of current analyses available.", style="color:black")),
-                                                                           shiny::plotOutput(ns("plotTimeStamps")),
-                                                                           p(span("Predictions table.", style="color:black")),
-                                                                           DT::DTOutput(ns("phenoRgg")),
-                                                                    )
-                                                )
+                                                # shinydashboard::box(status="success",width = 12, style = "height:460px; overflow-y: scroll;overflow-x: scroll;", solidHeader = TRUE,
+                                                #                     column(width=12,
+                                                # p(span("Network plot of current analyses available.", style="color:black")),
+                                                column(width=12, shiny::plotOutput(ns("plotTimeStamps")) ),
+                                                # p(span("Predictions table.", style="color:black")),
+                                                DT::DTOutput(ns("phenoRgg")),
+                                                #                     )
+                                                # )
                                        ),
-                                       tabPanel("Select trait(s)", icon = icon("magnifying-glass-chart"),
+                                       tabPanel("Select trait(s)", icon = icon("dice-two"),
                                                 br(),
                                                 column(width=12, selectInput(ns("trait2Rgg"), "Trait(s) to use", choices = NULL, multiple = TRUE), style = "background-color:grey; color: #FFFFFF"),
                                                 column(width=12,
@@ -84,15 +87,17 @@ mod_rggApp_ui <- function(id){
                                                        h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
                                                        hr(style = "border-top: 3px solid #4c4c4c;"),
                                                 ),
-                                                shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
-                                                                    column(width=12, style = "height:450px; overflow-y: scroll;overflow-x: scroll;",
-                                                                           p(span("View of current analyses available.", style="color:black")),
-                                                                           selectInput(ns("trait3Rgg"), "Trait to visualize regression over years.", choices = NULL, multiple = FALSE),
-                                                                           plotly::plotlyOutput(ns("plotPredictionsCleanOut")),
-                                                                    ),
-                                                )
+                                                # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                                #                     column(width=12, style = "height:450px; overflow-y: scroll;overflow-x: scroll;",
+                                                # p(span("View of current analyses available.", style="color:black")),
+                                                tags$span(id = ns('holder1'),
+                                                          selectInput(ns("trait3Rgg"), "Trait to visualize regression over years.", choices = NULL, multiple = FALSE),
+                                                          plotly::plotlyOutput(ns("plotPredictionsCleanOut")),
+                                                ),
+                                                #                     ),
+                                                # )
                                        ),
-                                       tabPanel("Select years & units", icon = icon("table"),
+                                       tabPanel("Select years & units", icon = icon("dice-three"),
                                                 br(),
                                                 column(width=12, style = "background-color:grey; color: #FFFFFF",
                                                        column(width=6, selectInput(ns("yearsToUse"), "Years of origin to use", choices = NULL, multiple = TRUE) ),
@@ -102,33 +107,42 @@ mod_rggApp_ui <- function(id){
                                                        hr(style = "border-top: 3px solid #4c4c4c;"),
                                                        h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
                                                        hr(style = "border-top: 3px solid #4c4c4c;"),
-                                                       column(width=12, style = "height:450px; overflow-y: scroll;overflow-x: scroll;",
-                                                              p(span("View of current analyses available.", style="color:black")),
-                                                              selectInput(ns("trait3Rgg2"), "Trait to visualize regression over years.", choices = NULL, multiple = FALSE),
-                                                              plotly::plotlyOutput(ns("plotPredictionsCleanOut2")),
-                                                       ),
                                                 ),
+                                                # column(width=12, style = "height:450px; overflow-y: scroll;overflow-x: scroll;",
+                                                # p(span("View of current analyses available.", style="color:black")),
+                                                tags$span(id = ns('holder2'),
+                                                          selectInput(ns("trait3Rgg2"), "Trait to visualize regression over years.", choices = NULL, multiple = FALSE),
+                                                          plotly::plotlyOutput(ns("plotPredictionsCleanOut2")),
+                                                ),
+                                                # ),
                                        ),
                                        tabPanel("Run analysis", icon = icon("play"),
-                                                br(),
-                                                actionButton(ns("runRgg"), "Run RGG", icon = icon("play-circle")),
-                                                uiOutput(ns("qaQcRggInfo")),
-                                                textOutput(ns("outRgg")),
-                                                hr(style = "border-top: 3px solid #4c4c4c;"),
-                                                column(width=12, style = "background-color:grey; color: #FFFFFF",
-                                                       shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Additional run settings...",
-                                                                           tags$span(id = ns('mackayOptions'),
-                                                                                     numericInput(ns("deregressWeight"), label = "Deregression weight", value = 1),
-                                                                                     selectInput(ns("partition"), "Partitioned regression", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE),
-                                                                           ),
-                                                                           tags$span(id = ns('piephoOptions'),
-                                                                                     numericInput(ns("sampleN"), label = "Number of entries per environment to sample", value = 50),
-                                                                                     numericInput(ns("bootstrappingN"), label = "Number of bootstrapping per samples", value = 10),
-                                                                           ),
-                                                                           selectInput(ns("deregress"), "Should deregress estimates", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE),
-                                                                           selectInput(ns("verbose"), label = "Print logs?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE)
+                                                column(width=12,style = "background-color:grey; color: #FFFFFF",
+                                                       column(width=3,
+                                                              br(),
+                                                              actionButton(ns("runRgg"), "Run RGG", icon = icon("play-circle")),
+                                                              uiOutput(ns("qaQcRggInfo")),
                                                        ),
+                                                       column(width=9,
+                                                              br(),
+                                                              column(width=12, #style = "background-color:grey; color: #FFFFFF",
+                                                                     shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Additional run settings...",
+                                                                                         tags$span(id = ns('mackayOptions'),
+                                                                                                   numericInput(ns("deregressWeight"), label = "Deregression weight", value = 1),
+                                                                                                   selectInput(ns("partition"), "Partitioned regression", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE),
+                                                                                         ),
+                                                                                         tags$span(id = ns('piephoOptions'),
+                                                                                                   numericInput(ns("sampleN"), label = "Number of entries per environment to sample", value = 50),
+                                                                                                   numericInput(ns("bootstrappingN"), label = "Number of bootstrapping per samples", value = 10),
+                                                                                         ),
+                                                                                         selectInput(ns("deregress"), "Should deregress estimates", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE),
+                                                                                         selectInput(ns("verbose"), label = "Print logs?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE)
+                                                                     ),
+                                                              ),
+                                                       ),
+                                                       br(),
                                                 ),
+                                                textOutput(ns("outRgg")),
                                        ),
                                      )
                             ),
@@ -136,22 +150,23 @@ mod_rggApp_ui <- function(id){
                                      tabsetPanel(
                                        tabPanel("Metrics", icon = icon("table"),
                                                 br(),
-                                                shinydashboard::box(status="success",width = 12,
-                                                                    solidHeader = TRUE,
-                                                                    column(width=12,br(),DT::DTOutput(ns("metricsRgg")),style = "height:530px; overflow-y: scroll;overflow-x: scroll;"),
-                                                )
+                                                # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                                #                     column(width=12,br(),
+                                                DT::DTOutput(ns("metricsRgg")),
+                                                #                            style = "height:530px; overflow-y: scroll;overflow-x: scroll;"),
+                                                # )
                                        ),
                                        tabPanel("Modeling", icon = icon("table"),
                                                 br(),
-                                                shinydashboard::box(status="success",width = 12,
-                                                                    solidHeader = TRUE,
-                                                                    column(width=12,DT::DTOutput(ns("modelingRgg")),style = "height:530px; overflow-y: scroll;overflow-x: scroll;"),
-                                                )
+                                                # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                                #                     column(width=12,
+                                                DT::DTOutput(ns("modelingRgg")),
+                                                #                            style = "height:530px; overflow-y: scroll;overflow-x: scroll;"),
+                                                # )
                                        ),
-                                       tabPanel("Report", icon = icon("file-image"),
+                                       tabPanel("Dashboard", icon = icon("file-image"),
                                                 br(),
-                                                div(tags$p("Please download the report below:") ),
-                                                downloadButton(ns("downloadReportRgg"), "Download report"),
+                                                downloadButton(ns("downloadReportRgg"), "Download dashboard"),
                                                 br(),
                                                 uiOutput(ns('reportRgg'))
                                        )
@@ -190,6 +205,19 @@ mod_rggApp_server <- function(id, data){
       }
     )
     ############################################################################
+    # show shinyWidgets until the user can use the module
+    observeEvent(c(data(), input$version2Rgg ), {
+      req(data())
+      mappedColumns <- length(which(c("environment","designation","trait") %in% data()$metadata$pheno$parameter))
+      if(mappedColumns == 3 & length(input$version2Rgg)>0  ){
+        golem::invoke_js('showid', ns('holder1'))
+        golem::invoke_js('showid', ns('holder2'))
+      }else{
+        golem::invoke_js('hideid', ns('holder1'))
+        golem::invoke_js('hideid', ns('holder2'))
+      }
+    })
+    ############################################################################
     output$warningMessage <- renderUI(
       if(is.null(data())){
         HTML( as.character(div(style="color: red; font-size: 20px;", "Please retrieve or load your phenotypic data using the 'Data Retrieval' tab, compute the 'environment' column, map the 'designation' and at least one trait.")) )
@@ -208,6 +236,39 @@ mod_rggApp_server <- function(id, data){
         }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please make sure that the column: 'yearOfOrigin' has been mapped in the pedigree data using the 'Data Retrieval' tab.")) )}
       }
     )
+    ## data example loading
+    observeEvent(
+      input$launch,
+      if(length(input$launch) > 0){
+        if (input$launch) {
+          shinyWidgets::ask_confirmation(
+            inputId = ns("myconfirmation"),
+            text = "Are you sure you want to load the example data? This will delete any data currently in the environment.",
+            title = "Data replacement warning"
+          )
+        }
+      }
+    )
+    observeEvent(input$myconfirmation, {
+      if (isTRUE(input$myconfirmation)) {
+        shinybusy::show_modal_spinner('fading-circle', text = 'Loading example...')
+        ## replace tables
+        data(cgiarBase::create_getData_object())
+        tmp <- data()
+        utils::data(DT_example, package = "cgiarPipeline")
+        if(!is.null(result$data)){tmp$data <- result$data}
+        if(!is.null(result$metadata)){tmp$metadata <- result$metadata}
+        if(!is.null(result$modifications)){tmp$modifications <- result$modifications}
+        if(!is.null(result$predictions)){tmp$predictions <- result$predictions}
+        if(!is.null(result$metrics)){tmp$metrics <- result$metrics}
+        if(!is.null(result$modeling)){tmp$modeling <- result$modeling}
+        if(!is.null(result$status)){tmp$status <- result$status}
+        data(tmp) # update data with results
+        shinybusy::remove_modal_spinner()
+      }else{
+        shinyWidgets::updatePrettySwitch(session, "launch", value = FALSE)
+      }
+    }, ignoreNULL = TRUE)
     #################
     ## version
     observeEvent(c(data(), input$methodRgg), {
@@ -293,10 +354,15 @@ mod_rggApp_server <- function(id, data){
       mydata <- mydata[which(mydata[,"trait"] %in% input$trait3Rgg),]
       mydata <- mydata[which(mydata$entryType == input$entryTypeToUse),]
       mydata[, "environment"] <- as.factor(mydata[, "environment"]); mydata[, "designation"] <- as.factor(mydata[, "designation"])
-      res <- plotly::plot_ly(y = mydata[,"predictedValue"], type = "scatter", boxpoints = "all", color = mydata[,"entryType"],
-                             x = mydata[,"yearOfOrigin"], text=mydata[,"designation"], pointpos = -1.8)
+
+      res <- ggplot2::ggplot(mydata, ggplot2::aes(x=yearOfOrigin, y=predictedValue, color=entryType)) +
+        ggplot2::geom_point() + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, vjust = 1, hjust = 1)) +
+        ggplot2::ggtitle("View of current analyses available")
+      plotly::ggplotly(res)
+      # res <- plotly::plot_ly(y = mydata[,"predictedValue"], type = "scatter", boxpoints = "all", color = mydata[,"entryType"],
+      #                        x = mydata[,"yearOfOrigin"], text=mydata[,"designation"], pointpos = -1.8)
       # res = res %>% plotly::layout(showlegend = TRUE,  xaxis = list(titlefont = list(size = input$fontSize), tickfont = list(size = input$fontSize)))
-      res
+      # res
     })
     output$plotPredictionsCleanOut2 <- plotly::renderPlotly({ # update plot
       req(data())
@@ -315,10 +381,19 @@ mod_rggApp_server <- function(id, data){
       mydata <- mydata[which(mydata[,"trait"] %in% input$trait3Rgg2),]
       mydata <- mydata[which(mydata$entryType == input$entryTypeToUse),]
       mydata[, "environment"] <- as.factor(mydata[, "environment"]); mydata[, "designation"] <- as.factor(mydata[, "designation"])
-      res <- plotly::plot_ly(y = mydata[,"predictedValue"], type = "scatter", boxpoints = "all", color = mydata[,"entryType"],
-                             x = mydata[,"yearOfOrigin"], text=mydata[,"designation"], pointpos = -1.8)
+
+      if(length(input$yearsToUse) > 0){
+        mydata <- mydata[which(mydata$yearOfOrigin %in% input$yearsToUse),]
+      }
+      res <- ggplot2::ggplot(mydata, ggplot2::aes(x=yearOfOrigin, y=predictedValue, color=entryType)) +
+        ggplot2::geom_point() + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, vjust = 1, hjust = 1)) +
+        ggplot2::ggtitle("View of current analyses available")
+      plotly::ggplotly(res)
+
+      # res <- plotly::plot_ly(y = mydata[,"predictedValue"], type = "scatter", boxpoints = "all", color = mydata[,"entryType"],
+      #                        x = mydata[,"yearOfOrigin"], text=mydata[,"designation"], pointpos = -1.8)
       # res = res %>% plotly::layout(showlegend = TRUE,  xaxis = list(titlefont = list(size = input$fontSize), tickfont = list(size = input$fontSize)))
-      res
+      # res
     })
     ## render timestamps flow
     output$plotTimeStamps <- shiny::renderPlot({
@@ -358,7 +433,7 @@ mod_rggApp_server <- function(id, data){
         network::set.edge.attribute(n, "day", sample(1, e, replace = TRUE))
         ggplot2::ggplot(n, ggplot2::aes(x = x, y = y, xend = xend, yend = yend)) +
           ggnetwork::geom_edges(ggplot2::aes(color = family), arrow = ggplot2::arrow(length = ggnetwork::unit(6, "pt"), type = "closed") ) +
-          ggnetwork::geom_nodes(ggplot2::aes(color = family), alpha = 0.5, size=5 ) +
+          ggnetwork::geom_nodes(ggplot2::aes(color = family), alpha = 0.5, size=5 ) + ggplot2::ggtitle("Network plot of current analyses available") +
           ggnetwork::geom_nodelabel_repel(ggplot2::aes(color = family, label = vertex.names ),
                                           fontface = "bold", box.padding = ggnetwork::unit(1, "lines")) +
           ggnetwork::theme_blank()
@@ -374,7 +449,11 @@ mod_rggApp_server <- function(id, data){
       numeric.output <- c("predictedValue", "stdError", "reliability")
       DT::formatRound(DT::datatable(dtRgg, extensions = 'Buttons',
                                     options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-                                                   lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+                                                   lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All'))),
+                                    caption = htmltools::tags$caption(
+                                      style = 'color:cadetblue', #caption-side: bottom; text-align: center;
+                                      htmltools::em('Predictions table.')
+                                    )
       ), numeric.output)
     })
     ## render result of "run" button click
@@ -500,7 +579,8 @@ mod_rggApp_server <- function(id, data){
             file.copy(src2, 'resultRgg.RData', overwrite = TRUE)
             out <- rmarkdown::render('report.Rmd', params = list(toDownload=TRUE),switch(
               "HTML",
-              HTML = rmarkdown::html_document()
+              HTML = rmdformats::robobook(toc_depth = 4)
+              # HTML = rmarkdown::html_document()
             ))
             file.rename(out, file)
           }

@@ -19,6 +19,7 @@
 # attachment::att_amend_desc()
 #
 #
+<<<<<<< HEAD
 #<<<<<<< HEAD
 ###################################
 #### CURRENT FILE: DEV SCRIPT #####
@@ -177,6 +178,9 @@ usethis::use_gitlab_ci()
 # go to dev/03_deploy.R
 rstudioapi::navigateToFile("dev/03_deploy.R")
 #=======
+=======
+# usethis::use_package("ape")
+>>>>>>> cfd808d972b77588e1d6e142b4cf8b64a1ec937b
 # usethis::use_package("DT")
 # usethis::use_package("config")
 # usethis::use_package("sommer")
@@ -191,6 +195,7 @@ rstudioapi::navigateToFile("dev/03_deploy.R")
 # usethis::use_package("shinycssloaders")
 # usethis::use_package("shinyAce")
 # usethis::use_package("shinyWidgets")
+# usethis::use_package("shinyalert")
 # usethis::use_package("magrittr")
 # usethis::use_package("plotly")
 # usethis::use_package("plyr")
@@ -212,16 +217,19 @@ rstudioapi::navigateToFile("dev/03_deploy.R")
 # usethis::use_package("dendextend")
 # usethis::use_package("slickR")
 # usethis::use_package("gridExtra")
+# usethis::use_package("rmdformats")
+# usethis::use_package("grafify")
 # # usethis::use_package("tidyverse")
 # usethis::use_pipe()
 # usethis::use_dev_package("cgiarBase", type = "Imports", remote = "Breeding-Analytics/cgiarBase")
 # usethis::use_dev_package("cgiarPipeline", type = "Imports", remote = "Breeding-Analytics/cgiarPipeline")
 # usethis::use_dev_package("cgiarOcs", type = "Imports", remote = "Breeding-Analytics/cgiarOcs")
+# usethis::use_dev_package("st4gi", type = "Imports", remote = "reyzaguirre/st4gi")
 #
 # # https://icarda-git.github.io/QBMS/#boosting-big-queries-performance
 # # https://github.com/gaborcsardi/async/issues/70
 # usethis::use_dev_package("async", type = "Imports", remote = "r-lib/async")
-# usethis::use_dev_package("QBMS", type = "Imports", remote = "icarda-git/QBMS")
+# usethis::use_package("QBMS")
 # usethis::use_package("vcfR")
 #
 # usethis::use_package( "shinymanager" )
@@ -236,12 +244,15 @@ rstudioapi::navigateToFile("dev/03_deploy.R")
 # # remotes::install_github("Breeding-Analytics/cgiarPipeline")
 # # remotes::install_github("Breeding-Analytics/cgiarOcs")
 # # remotes::install_github("r-lib/async")
-# # remotes::install_github("icarda-git/QBMS")
 #
 # ## Add modules ----
 # ## Create a module infrastructure in R/
 # # golem::add_module(name = "input_file_sta", with_test = FALSE) # Name of the module
 # golem::add_module(name = "getData", with_test = FALSE) # extracting raw data
+# golem::add_module(name = "getDataPheno", with_test = FALSE)
+# golem::add_module(name = "getDataGeno", with_test = FALSE)
+# golem::add_module(name = "getDataPed", with_test = FALSE)
+# golem::add_module(name = "getDataQTL", with_test = FALSE)
 # golem::add_module(name = "getDataWeather", with_test = FALSE) # extracting raw data
 # golem::add_module(name = "getOldAnalysis", with_test = FALSE) # extracting raw data
 #
@@ -258,10 +269,13 @@ rstudioapi::navigateToFile("dev/03_deploy.R")
 # golem::add_module(name = "qaStaApp", with_test = FALSE) # QA after sta
 # golem::add_module(name = "oftStaApp", with_test = FALSE) # OFT after sta
 # golem::add_module(name = "mtaApp", with_test = FALSE) # multi trial analysis
+# golem::add_module(name = "mtaExpApp", with_test = FALSE) # multi trial analysis
 # golem::add_module(name = "indexDesireApp", with_test = FALSE) # desire selection index
+# golem::add_module(name = "indexBaseApp", with_test = FALSE) # desire selection index
 # golem::add_module(name = "ocsApp", with_test = FALSE) # optimal cross selection
 # golem::add_module(name = "rggApp", with_test = FALSE) # realized genetic gain
 # golem::add_module(name = "pggApp", with_test = FALSE) # predicted genetic gain
+# golem::add_module(name = "dataConsistPotatoApp", with_test = FALSE) # predicted genetic gain
 #
 # golem::add_module(name = "homeApp", with_test = FALSE) # home
 #
@@ -276,6 +290,7 @@ rstudioapi::navigateToFile("dev/03_deploy.R")
 # golem::add_module(name = "sectionInfoSHApp", with_test = FALSE) # for selection history
 #
 # golem::add_module(name = "abiDashboard", with_test = FALSE) # abi dashboard
+# golem::add_module(name = "reportBuilder", with_test = FALSE) # abi dashboard
 #
 # ## Add helper functions ----
 # ## Creates fct_* and utils_*
@@ -300,7 +315,7 @@ rstudioapi::navigateToFile("dev/03_deploy.R")
 # # Documentation
 #
 # ## Vignette ----
-# # usethis::use_vignette("frame")
+# # usethis::use_vignette("bioflow")
 # devtools::build_vignettes()
 #
 # ## Code Coverage----

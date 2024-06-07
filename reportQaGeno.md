@@ -1,7 +1,7 @@
 ---
 title: "Quality Assurance Genotype Report"
-author: ""
-date: "December 2023"
+author: "Contact:<a href = 'https://github.com/Breeding-Analytics/bioflow' target = '_blank'>Breeding Analytics Team, OneCGIAR</a> breedinganalytics@cgiar.org"
+date: "May 23, 2024"  
 output: html_document
 params:
   toDownload: FALSE
@@ -12,9 +12,6 @@ params:
 
 
 
-```
-NULL
-```
 
 
 ### Table of modifications
@@ -26,16 +23,13 @@ The following table shows the modifications that have been saved in your analysi
 <label class="control-label" id="qaGenoApp_1-traitQa-label" for="qaGenoApp_1-traitQa">Reason for QA:</label>
 <div>
 <select id="qaGenoApp_1-traitQa" class="shiny-input-select"><option value="%missing" selected>%missing</option>
-<option value="MAF">MAF</option>
-<option value="inbreeding">inbreeding</option>
 <option value="impute">impute</option></select>
 <script type="application/json" data-for="qaGenoApp_1-traitQa" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div><!--/html_preserve-->
 
 
-<!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="qaGenoApp_1-outce9165adcb388165" style="width:100%;height:auto;"></div><!--/html_preserve-->
-
+<!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="qaGenoApp_1-outb6c4e5d2b9fc7714" style="width:100%;height:auto;"></div><!--/html_preserve-->
 
 
 <p>&nbsp;</p>
@@ -45,4 +39,9 @@ The following table shows the modifications that have been saved in your analysi
 Tukey, J. W. (1977). Exploratory Data Analysis. Section 2C.
 
 Velleman, P. F. and Hoaglin, D. C. (1981). Applications, Basics and Computing of Exploratory Data Analysis. Duxbury Press.
+
+
+<p>&nbsp;</p>
+
+
 

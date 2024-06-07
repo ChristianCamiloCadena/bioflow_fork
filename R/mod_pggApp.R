@@ -11,61 +11,67 @@ mod_pggApp_ui <- function(id){
   ns <- NS(id)
   tagList(
 
+    tags$br(),
+
     mainPanel( width =12,
                tabsetPanel( id=ns("tabsMain"),
                             type = "tabs",
                             tabPanel( div(icon("book"), "Information-PGG") ,
                                       br(),
-                                      shinydashboard::box(status="success",width = 12,
-                                                          solidHeader = TRUE,
-                                                          column(width=12,   style = "height:580px; overflow-y: scroll;overflow-x: scroll;",
-                                                                 column(width = 6,
-                                                                        h1(strong(span("Predicted Genetic Gain", style="color:green"))),
-                                                                        h2(strong("Status:")),
-                                                                        uiOutput(ns("warningMessage")),
-                                                                        img(src = "www/pgg.png", height = 250, width = 500), # add an image
-                                                                 ),
-                                                                 column(width = 6, shiny::plotOutput(ns("plotDataDependencies")), ),
-                                                                 column(width = 12,
-                                                                        h2(strong("Details")),
-                                                                        p("In order to monitor the efficacy of genetic evaluation in the current cycle of selection the predicted genetic gain formula is used.
+                                      # shinydashboard::box(status="success",width = 12,solidHeader = TRUE,
+                                      #                     column(width=12,   style = "height:580px; overflow-y: scroll;overflow-x: scroll;",
+                                      column(width = 6,
+                                             h1(strong(span("Predicted Genetic Gain", tags$a(href="https://www.youtube.com/watch?v=nc4_SddPjjo&list=PLZ0lafzH_UmclOPifjCntlMzysEB2_2wX&index=11", icon("youtube") , target="_blank"), style="color:darkcyan"))),
+                                             h2(strong("Status:")),
+                                             uiOutput(ns("warningMessage")),
+                                             tags$br(),
+                                             img(src = "www/pgg.png", height = 250, width = 500), # add an image
+                                      ),
+                                      column(width = 6, shiny::plotOutput(ns("plotDataDependencies")), ),
+                                      column(width = 12,
+                                             h2(strong("Details")),
+                                             p("In order to monitor the efficacy of genetic evaluation in the current cycle of selection the predicted genetic gain formula is used.
                                           This option aims to calculate the predicted genetic gain from the classical breeders' equation
                               R = i*r*s being R the response to selection, i the selection intensity, r the selection accuracy, s the genetic standard deviation.
                                 The way the options are used is the following:"),
-                                                                        p(strong("Trait(s) to use.-")," Trait to be be used for calculating the predicted genetic gain parameters."),
-                                                                        p(strong("Environment(s) to use.-")," Environments-data to be used from the input file."),
-                                                                        p(strong("Proportion selected.-")," Proportion of parents to be selected in order to calculate the selection intensity."),
-                                                                        h2(strong("References:")),
-                                                                        p("Lush, J. L. (2013). Animal breeding plans. Read Books Ltd."),
-                                                                        p("Mrode, R. A. (2014). Linear models for the prediction of animal breeding values. Cabi."),
-                                                                        h2(strong("Software used:")),
-                                                                        p("R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing,
+                                             p(strong("Trait(s) to use.-")," Trait to be be used for calculating the predicted genetic gain parameters."),
+                                             p(strong("Environment(s) to use.-")," Environments-data to be used from the input file."),
+                                             p(strong("Proportion selected.-")," Proportion of parents to be selected in order to calculate the selection intensity."),
+                                             h2(strong("References:")),
+                                             p("Lush, J. L. (2013). Animal breeding plans. Read Books Ltd."),
+                                             p("Mrode, R. A. (2014). Linear models for the prediction of animal breeding values. Cabi."),
+                                             h2(strong("Software used:")),
+                                             p("R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing,
                                 Vienna, Austria. URL https://www.R-project.org/."),
-                                                                 ),
-                                                          )
-                                      )
+                                      ),
+                                      #                     )
+                                      # )
                             ),
                             tabPanel(div(icon("arrow-right-to-bracket"), "Input"),
                                      tabsetPanel(
-                                       tabPanel("Pick Index-stamp", icon = icon("table"),
+                                       tabPanel("Pick Index-stamp", icon = icon("dice-one"),
                                                 br(),
-                                                column(width=12, selectInput(ns("version2Pgg"), "Index or MTA version to analyze", choices = NULL, multiple = FALSE), style = "background-color:grey; color: #FFFFFF"),
+                                                column(width=12, style = "background-color:grey; color: #FFFFFF",
+                                                       column(width=8, selectInput(ns("version2Pgg"), "Index or MTA version to analyze", choices = NULL, multiple = FALSE)),
+                                                       column(width=4, tags$br(),
+                                                              shinyWidgets::prettySwitch( inputId = ns('launch'), label = "Load example", status = "success"),
+                                                       ),
+                                                ),
                                                 column(width=12,
                                                        hr(style = "border-top: 3px solid #4c4c4c;"),
                                                        h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
                                                        hr(style = "border-top: 3px solid #4c4c4c;"),
                                                 ),
-                                                shinydashboard::box(status="success",width = 12, style = "height:460px; overflow-y: scroll;overflow-x: scroll;",
-                                                                    solidHeader = TRUE,
-                                                                    column(width=12,
-                                                                           p(span("Network plot of current analyses available.", style="color:black")),
-                                                                           shiny::plotOutput(ns("plotTimeStamps")),
-                                                                           p(span("Predictions table to be used as input.", style="color:black")),
-                                                                           DT::DTOutput(ns("phenoPgg")),
-                                                                    )
-                                                )
+                                                # shinydashboard::box(status="success",width = 12, style = "height:460px; overflow-y: scroll;overflow-x: scroll;", solidHeader = TRUE,
+                                                #                     column(width=12,
+                                                # p(span("Network plot of current analyses available.", style="color:black")),
+                                                column( width=12, shiny::plotOutput(ns("plotTimeStamps")) ),
+                                                # p(span("Predictions table to be used as input.", style="color:black")),
+                                                DT::DTOutput(ns("phenoPgg")),
+                                                #                     )
+                                                # )
                                        ),
-                                       tabPanel("Select trait(s)", icon = icon("table"),
+                                       tabPanel("Select trait(s)", icon = icon("dice-two"),
                                                 br(),
                                                 column(width=12, selectInput(ns("trait2Pgg"), "Trait(s) to use", choices = NULL, multiple = TRUE),  style = "background-color:grey; color: #FFFFFF"),
                                                 column(width=12,
@@ -73,24 +79,29 @@ mod_pggApp_ui <- function(id){
                                                        h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
                                                        hr(style = "border-top: 3px solid #4c4c4c;"),
                                                 ),
-                                                shinydashboard::box(status="success",width = 12,solidHeader = TRUE,
-                                                                    column(width=12, style = "height:450px; overflow-y: scroll;overflow-x: scroll;",
-                                                                           p(span("Metrics available for analysis stamp selected.", style="color:black")),
-                                                                           column(width=6, selectInput(ns("traitMetrics"), "Trait to visualize", choices = NULL, multiple = TRUE) ) ,
-                                                                           column(width=6, selectInput(ns("parameterMetrics"), "Parameter to visualize", choices = NULL, multiple = FALSE) ),
-                                                                           column(width=12, plotly::plotlyOutput(ns("barplotPredictionsMetrics")) ),
-                                                                           shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Additional run settings...",
-                                                                                               selectInput(ns("environmentToUse"), "Environments to use", choices = NULL, multiple = TRUE),
-                                                                                               numericInput(ns("proportion"), label = "Proportion selected (%)", value = 10, step = 10, max = 100, min = 1),
-                                                                                               selectInput(ns("verbose"), label = "Print logs?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE)
-                                                                           ),
-                                                                    ),
-                                                )
+                                                # shinydashboard::box(status="success",width = 12,solidHeader = TRUE,
+                                                #                     column(width=12, style = "height:450px; overflow-y: scroll;overflow-x: scroll;",
+                                                # p(span("Metrics available for analysis stamp selected.", style="color:black")),
+                                                tags$span(id = ns('holder1'),
+                                                          column(width=6, selectInput(ns("traitMetrics"), "Trait to visualize", choices = NULL, multiple = TRUE) ) ,
+                                                          column(width=6, selectInput(ns("parameterMetrics"), "Parameter to visualize", choices = NULL, multiple = FALSE) ),
+                                                          column(width=12, plotly::plotlyOutput(ns("barplotPredictionsMetrics")) ),
+                                                          shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Additional run settings...",
+                                                                              selectInput(ns("environmentToUse"), "Environments to use", choices = NULL, multiple = TRUE),
+                                                                              numericInput(ns("proportion"), label = "Proportion selected (%)", value = 10, step = 10, max = 100, min = 1),
+                                                                              selectInput(ns("verbose"), label = "Print logs?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE)
+                                                          ),
+                                                ),
+                                                #                     ),
+                                                # )
                                        ),
                                        tabPanel("Run analysis", icon = icon("play"),
-                                                br(),
-                                                actionButton(ns("runPgg"), "Run PGG", icon = icon("play-circle")),
-                                                uiOutput(ns("qaQcPggInfo")),
+                                                column(width=12,style = "background-color:grey; color: #FFFFFF",
+                                                       br(),
+                                                       actionButton(ns("runPgg"), "Run PGG", icon = icon("play-circle")),
+                                                       uiOutput(ns("qaQcPggInfo")),
+                                                       br(),
+                                                ),
                                                 textOutput(ns("outPgg")),
                                        ),
                                      )
@@ -99,22 +110,23 @@ mod_pggApp_ui <- function(id){
                                      tabsetPanel(
                                        tabPanel("Metrics", icon = icon("table"),
                                                 br(),
-                                                shinydashboard::box(status="success",width = 12,
-                                                                    solidHeader = TRUE,
-                                                                    column(width=12,br(),DT::DTOutput(ns("metricsPgg")),style = "height:530px; overflow-y: scroll;overflow-x: scroll;")
-                                                )
+                                                # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                                # column(width=12,br(),
+                                                DT::DTOutput(ns("metricsPgg")),
+                                                # style = "height:530px; overflow-y: scroll;overflow-x: scroll;")
+                                                # )
                                        ),
                                        tabPanel("Modeling", icon = icon("table"),
                                                 br(),
-                                                shinydashboard::box(status="success",width = 12,
-                                                                    solidHeader = TRUE,
-                                                                    column(width=12,DT::DTOutput(ns("modelingPgg")),style = "height:530px; overflow-y: scroll;overflow-x: scroll;")
-                                                )
+                                                # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
+                                                # column(width=12,
+                                                DT::DTOutput(ns("modelingPgg")),
+                                                # style = "height:530px; overflow-y: scroll;overflow-x: scroll;")
+                                                # )
                                        ),
-                                       tabPanel("Report", icon = icon("file-image"),
+                                       tabPanel("Dashboard", icon = icon("file-image"),
                                                 br(),
-                                                div(tags$p("Please download the report below:") ),
-                                                downloadButton(ns("downloadReportPgg"), "Download report"),
+                                                downloadButton(ns("downloadReportPgg"), "Download dashboard"),
                                                 br(),
                                                 uiOutput(ns('reportPgg'))
                                        )
@@ -139,6 +151,17 @@ mod_pggApp_server <- function(id, data){
       hideAll$clearAll <- TRUE
     })
     ############################################################################
+    # show shinyWidgets until the user can use the module
+    observeEvent(c(data(), input$version2Pgg ), {
+      req(data())
+      mappedColumns <- length(which(c("environment","designation","trait") %in% data()$metadata$pheno$parameter))
+      if(mappedColumns == 3 & length(input$version2Pgg)>0 ){
+        golem::invoke_js('showid', ns('holder1'))
+      }else{
+        golem::invoke_js('hideid', ns('holder1'))
+      }
+    })
+    ############################################################################
     ## warning message
     output$warningMessage <- renderUI(
       if(is.null(data())){
@@ -149,6 +172,39 @@ mod_pggApp_server <- function(id, data){
         }else{HTML( as.character(div(style="color: red; font-size: 20px;", "Please perform a Multi-Trial Analysis before performing a predicted genetic gain analysis.")) ) }
       }
     )
+    ## data example loading
+    observeEvent(
+      input$launch,
+      if(length(input$launch) > 0){
+        if (input$launch) {
+          shinyWidgets::ask_confirmation(
+            inputId = ns("myconfirmation"),
+            text = "Are you sure you want to load the example data? This will delete any data currently in the environment.",
+            title = "Data replacement warning"
+          )
+        }
+      }
+    )
+    observeEvent(input$myconfirmation, {
+      if (isTRUE(input$myconfirmation)) {
+        shinybusy::show_modal_spinner('fading-circle', text = 'Loading example...')
+        ## replace tables
+        data(cgiarBase::create_getData_object())
+        tmp <- data()
+        utils::data(DT_example, package = "cgiarPipeline")
+        if(!is.null(result$data)){tmp$data <- result$data}
+        if(!is.null(result$metadata)){tmp$metadata <- result$metadata}
+        if(!is.null(result$modifications)){tmp$modifications <- result$modifications}
+        if(!is.null(result$predictions)){tmp$predictions <- result$predictions}
+        if(!is.null(result$metrics)){tmp$metrics <- result$metrics}
+        if(!is.null(result$modeling)){tmp$modeling <- result$modeling}
+        if(!is.null(result$status)){tmp$status <- result$status}
+        data(tmp) # update data with results
+        shinybusy::remove_modal_spinner()
+      }else{
+        shinyWidgets::updatePrettySwitch(session, "launch", value = FALSE)
+      }
+    }, ignoreNULL = TRUE)
     #################
     ## version
     observeEvent(c(data()), {
@@ -232,12 +288,15 @@ mod_pggApp_server <- function(id, data){
       mydata <- mydata[which(mydata$analysisId %in% input$version2Pgg),]
       mydata = mydata[which(mydata$parameter %in% input$parameterMetrics),]
       mydata = mydata[which(mydata$trait %in% input$traitMetrics),]
-      res = plotly::plot_ly(data = mydata, x = mydata[,"environment"], y = mydata[,"value"],
-                            color=mydata[,"trait"]
-                            # size=mydata[,input$sizeMetrics2D], text=mydata[,"environment"]
-      )   # , type="scatter", mode   = "markers")
-      res = res %>% plotly::add_bars()
-      res
+      res <- ggplot2::ggplot(data=mydata, ggplot2::aes(x=environment, y=value, fill=trait)) +
+        ggplot2::geom_bar(stat="identity", position=ggplot2::position_dodge()) +  ggplot2::ggtitle("Metrics associated to this stamp selected")
+      plotly::ggplotly(res)
+      # res = plotly::plot_ly(data = mydata, x = mydata[,"environment"], y = mydata[,"value"],
+      #                       color=mydata[,"trait"]
+      #                       # size=mydata[,input$sizeMetrics2D], text=mydata[,"environment"]
+      # )   # , type="scatter", mode   = "markers")
+      # res = res %>% plotly::add_bars()
+      # res
     })
     ## render timestamps flow
     output$plotTimeStamps <- shiny::renderPlot({
@@ -277,7 +336,7 @@ mod_pggApp_server <- function(id, data){
         network::set.edge.attribute(n, "day", sample(1, e, replace = TRUE))
         ggplot2::ggplot(n, ggplot2::aes(x = x, y = y, xend = xend, yend = yend)) +
           ggnetwork::geom_edges(ggplot2::aes(color = family), arrow = ggplot2::arrow(length = ggnetwork::unit(6, "pt"), type = "closed") ) +
-          ggnetwork::geom_nodes(ggplot2::aes(color = family), alpha = 0.5, size=5 ) +
+          ggnetwork::geom_nodes(ggplot2::aes(color = family), alpha = 0.5, size=5 ) + ggplot2::ggtitle("Network plot of current analyses available") +
           ggnetwork::geom_nodelabel_repel(ggplot2::aes(color = family, label = vertex.names ),
                                           fontface = "bold", box.padding = ggnetwork::unit(1, "lines")) +
           ggnetwork::theme_blank()
@@ -294,7 +353,11 @@ mod_pggApp_server <- function(id, data){
       numeric.output <- c("predictedValue", "stdError", "reliability")
       DT::formatRound(DT::datatable(current.predictions, extensions = 'Buttons',
                                     options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-                                                   lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+                                                   lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All'))),
+                                    caption = htmltools::tags$caption(
+                                      style = 'color:cadetblue', #caption-side: bottom; text-align: center;
+                                      htmltools::em('Predictions table to be used as input.')
+                                    )
       ), numeric.output)
     })
     ## render result of "run" button click
@@ -381,6 +444,30 @@ mod_pggApp_server <- function(id, data){
           HTML(markdown::markdownToHTML(knitr::knit(system.file("rmd","reportPgg.Rmd",package="bioflow"), quiet = TRUE), fragment.only=TRUE))
         })
 
+        output$downloadReportPgg <- downloadHandler(
+          filename = function() {
+            paste('my-report', sep = '.', switch(
+              "HTML", PDF = 'pdf', HTML = 'html', Word = 'docx'
+            ))
+          },
+          content = function(file) {
+            src <- normalizePath(system.file("rmd","reportPgg.Rmd",package="bioflow"))
+            src2 <- normalizePath('data/resultPgg.RData')
+            # temporarily switch to the temp dir, in case you do not have write
+            # permission to the current working directory
+            owd <- setwd(tempdir())
+            on.exit(setwd(owd))
+            file.copy(src, 'report.Rmd', overwrite = TRUE)
+            file.copy(src2, 'resultPgg.RData', overwrite = TRUE)
+            out <- rmarkdown::render('report.Rmd', params = list(toDownload=TRUE),switch(
+              "HTML",
+              HTML = rmdformats::robobook(toc_depth = 4)
+              # HTML = rmarkdown::html_document()
+            ))
+            file.rename(out, file)
+          }
+        )
+
 
       } else {
         output$predictionsPgg <- DT::renderDT({DT::datatable(NULL)})
@@ -391,29 +478,6 @@ mod_pggApp_server <- function(id, data){
       hideAll$clearAll <- FALSE
 
     }) ## end eventReactive
-
-    output$downloadReportPgg <- downloadHandler(
-      filename = function() {
-        paste('my-report', sep = '.', switch(
-          "HTML", PDF = 'pdf', HTML = 'html', Word = 'docx'
-        ))
-      },
-      content = function(file) {
-        src <- normalizePath(system.file("rmd","reportPgg.Rmd",package="bioflow"))
-        src2 <- normalizePath('data/resultPgg.RData')
-        # temporarily switch to the temp dir, in case you do not have write
-        # permission to the current working directory
-        owd <- setwd(tempdir())
-        on.exit(setwd(owd))
-        file.copy(src, 'report.Rmd', overwrite = TRUE)
-        file.copy(src2, 'resultPgg.RData', overwrite = TRUE)
-        out <- rmarkdown::render('report.Rmd', params = list(toDownload=TRUE),switch(
-          "HTML",
-          HTML = rmarkdown::html_document()
-        ))
-        file.rename(out, file)
-      }
-    )
 
     output$outPgg <- renderPrint({
       outPgg()
