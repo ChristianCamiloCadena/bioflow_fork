@@ -219,18 +219,25 @@ rstudioapi::navigateToFile("dev/03_deploy.R")
 # usethis::use_package("gridExtra")
 # usethis::use_package("rmdformats")
 # usethis::use_package("grafify")
+# usethis::use_package("lme4")
 # # usethis::use_package("tidyverse")
 # usethis::use_pipe()
 # usethis::use_dev_package("cgiarBase", type = "Imports", remote = "Breeding-Analytics/cgiarBase")
 # usethis::use_dev_package("cgiarPipeline", type = "Imports", remote = "Breeding-Analytics/cgiarPipeline")
 # usethis::use_dev_package("cgiarOcs", type = "Imports", remote = "Breeding-Analytics/cgiarOcs")
 # usethis::use_dev_package("st4gi", type = "Imports", remote = "reyzaguirre/st4gi")
+# usethis::use_dev_package("lme4breeding", type = "Imports", remote = "covaruber/lme4breeding")
 #
 # # https://icarda-git.github.io/QBMS/#boosting-big-queries-performance
 # # https://github.com/gaborcsardi/async/issues/70
 # usethis::use_dev_package("async", type = "Imports", remote = "r-lib/async")
 # usethis::use_package("QBMS")
 # usethis::use_package("vcfR")
+# usethis::use_package("future")
+# usethis::use_package("promises")
+# usethis::use_package("rlang")
+# usethis::use_package("httr2")
+# usethis::use_package("jsonlite")
 #
 # usethis::use_package( "shinymanager" )
 #
@@ -266,6 +273,7 @@ rstudioapi::navigateToFile("dev/03_deploy.R")
 # golem::add_module(name = "traitTransformApp", with_test = TRUE) # QA after sta
 #
 # golem::add_module(name = "staApp", with_test = FALSE) # single trial analysis
+# golem::add_module(name = "mtaExploreApp", with_test = FALSE) # single trial analysis
 # golem::add_module(name = "qaStaApp", with_test = FALSE) # QA after sta
 # golem::add_module(name = "oftStaApp", with_test = FALSE) # OFT after sta
 # golem::add_module(name = "mtaApp", with_test = FALSE) # multi trial analysis

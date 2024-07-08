@@ -67,6 +67,12 @@ mod_getDataPheno_ui <- function(id){
 
                                            tags$span(id = ns('auth_server_holder'),
                                                      shinydashboard::box(width = 4, title = span(icon('key'), ' Authentication'), status = 'success', solidHeader = TRUE,
+                                                                         tags$span(id = ns('pheno_db_token_holder'),
+                                                                                   textInput(
+                                                                                     inputId = ns('pheno_token_user'),
+                                                                                     label = 'Token:'
+                                                                                   )
+                                                                         ),
                                                                          tags$span(id = ns('pheno_db_user_holder'),
                                                                                    textInput(
                                                                                      inputId = ns('pheno_db_user'),
@@ -119,13 +125,7 @@ mod_getDataPheno_ui <- function(id){
                                            ),
                                   ),
                                   if (!is.null(pheno_example)) {
-                                    # checkboxInput(
-                                    #   inputId = ns('pheno_example'),
-                                    #   label = span('Load example ',
-                                    #                a('phenotypic data', target = '_blank',
-                                    #                  href = pheno_example)),
-                                    #   value = FALSE
-                                    # )
+
                                     shinyWidgets::prettySwitch( inputId = ns('pheno_example'), label = "Load example", status = "success")
 
                                   },
@@ -191,6 +191,12 @@ mod_getDataPheno_ui <- function(id){
                                                       uiOutput(ns('pheno_map')),
                                   ),
                            ),
+                           column(width=12,
+                                  shinydashboard::box(width = 12,  status = 'success', solidHeader = FALSE,
+                                                      hr(),
+                                                      DT::DTOutput(ns('preview_pheno2')),
+                                  ),
+                           ),
 
                   ),
                   tabPanel(div("3. Define environments" ),
@@ -203,7 +209,7 @@ mod_getDataPheno_ui <- function(id){
                            column(width=12,
                                   shinydashboard::box(width = 12,  status = 'success', solidHeader = FALSE,
                                                       hr(),
-                                                      DT::DTOutput(ns('preview_pheno2')),
+                                                      DT::DTOutput(ns('preview_pheno3')),
                                   ),
                            ),
 
@@ -289,6 +295,12 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
         golem::invoke_js('hideid', ns('data_server_holder'))
 
         if (input$pheno_db_type == 'ebs') {
+          is_local <- Sys.getenv('SHINY_PORT') == ""
+          if (is_local == TRUE) {
+            golem::invoke_js('hideid', ns('pheno_db_token_holder'))
+          } else {
+            golem::invoke_js('showid', ns('pheno_db_token_holder'))
+          }
           golem::invoke_js('hideid', ns('pheno_db_user_holder'))
           golem::invoke_js('hideid', ns('pheno_db_password_holder'))
           golem::invoke_js('hideid', ns('pheno_db_crop_holder'))
@@ -296,6 +308,7 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
           QBMS::set_qbms_config(url = input$pheno_db_url, engine = 'ebs', brapi_ver = 'v2')
         } else if (input$pheno_db_type == 'bms') {
+          golem::invoke_js('hideid', ns('pheno_db_token_holder'))
           golem::invoke_js('showid', ns('pheno_db_user_holder'))
           golem::invoke_js('showid', ns('pheno_db_password_holder'))
           golem::invoke_js('showid', ns('pheno_db_crop_holder'))
@@ -303,6 +316,7 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
           QBMS::set_qbms_config(url = input$pheno_db_url, engine = 'bms', brapi_ver = 'v1')
         } else if (input$pheno_db_type == 'breedbase') {
+          golem::invoke_js('hideid', ns('pheno_db_token_holder'))
           golem::invoke_js('hideid', ns('pheno_db_user_holder'))
           golem::invoke_js('hideid', ns('pheno_db_password_holder'))
           golem::invoke_js('hideid', ns('pheno_db_crop_holder'))
@@ -313,7 +327,7 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
           QBMS::set_qbms_config(url = input$pheno_db_url, engine = 'breedbase', brapi_ver = 'v1')
         }
 
-        output$preview_pheno <- output$preview_pheno2 <- DT::renderDT(NULL)
+        output$preview_pheno <- output$preview_pheno2 <- output$preview_pheno3 <- DT::renderDT(NULL)
       }
     )
 
@@ -392,7 +406,7 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
               shinybusy::remove_modal_spinner()
             }
 
-            output$preview_pheno <- output$preview_pheno2 <- DT::renderDT(NULL)
+            output$preview_pheno <- output$preview_pheno2 <- output$preview_pheno3 <- DT::renderDT(NULL)
 
           },
           error = function(e) {
@@ -638,7 +652,7 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
           if(length(toRemove) > 0){temp$status <- temp$status[-toRemove,, drop=FALSE]}
         } # make sure if an user uploads a new dataset the qaRaw starts empty
 
-        output$preview_pheno <- output$preview_pheno2 <- DT::renderDT({
+        output$preview_pheno <- output$preview_pheno2 <- output$preview_pheno3 <- DT::renderDT({
           DT::datatable(temp$data$pheno,
                         extensions = 'Buttons',
                         options = list(dom = 'Blfrtip',
@@ -930,7 +944,7 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
     # change color of updated study column
     observeEvent(input$concatenateEnv,{
-      output$preview_pheno <- output$preview_pheno2 <- DT::renderDT({
+      output$preview_pheno <- output$preview_pheno2 <- output$preview_pheno3 <- DT::renderDT({
         myObject <- data()
         phenoColnames <- colnames(myObject$data$pheno)
         if("environment" %in% phenoColnames){

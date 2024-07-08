@@ -19,15 +19,20 @@ Imports:
     config (>= 0.3.2),
     data.table,
     DT,
+    future,
     ggnetwork,
     ggplot2,
     golem (>= 0.4.0),
     grafify,
     gridExtra,
     htmltools,
+    httr2,
     inline,
     janitor,
+    jsonlite,
     kableExtra,
+    lme4,
+    lme4breeding (>= 1.0.1),
     LMMsolver,
     magrittr,
     markdown,
@@ -36,9 +41,11 @@ Imports:
     pedigreemm,
     plotly,
     plyr,
+    promises,
     psych,
     QBMS (>= 1.0.0),
     RColorBrewer,
+    rlang,
     rmdformats,
     RSpectra,
     shiny (>= 1.7.5),
@@ -74,9 +81,10 @@ Encoding: UTF-8
 Language: en-US
 LazyData: true
 RoxygenNote: 7.3.1.9000
-Remotes:  
+Remotes: 
     Breeding-Analytics/cgiarBase,
     Breeding-Analytics/cgiarPipeline,
     Breeding-Analytics/cgiarOcs,
     r-lib/async,
-    reyzaguirre/st4gi
+    reyzaguirre/st4gi,
+    covaruber/lme4breeding

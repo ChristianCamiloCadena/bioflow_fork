@@ -46,7 +46,20 @@ mod_homeApp_ui <- function(id){
         type = "text/css",
         rel = "stylesheet",
         href = "css/styles.css"
-      )
+      ),
+
+      ### START: OAuth2 JS helper functions ####################################
+
+      tags$script('Shiny.addCustomMessageHandler("redirect", function(url) {window.location.href = (url);});'),
+      tags$script('Shiny.addCustomMessageHandler("popup", function(url) {window.open(url);});'),
+      tags$script('$(document).on("shiny:connected", function() {Shiny.setInputValue("cookies", document.cookie)});'),
+
+      if (Sys.getenv("SHINY_PORT") == "") {
+        # ensure using localhost domain instead of 127.0.0.1 to match redirect uri registered for the oauth2 client
+        tags$script('if(location.hostname == "127.0.0.1") {window.location.href = location.protocol+"//localhost:"+location.port;}')
+      }
+
+      ### END: OAuth2 JS helper functions ######################################
     ),
 
     tags$div(
@@ -56,7 +69,7 @@ mod_homeApp_ui <- function(id){
         class = "landing-block background-content",
         # images: top -> bottom, left -> right
         tags$div(tags$img(src = "www/homeImageAsia.JPG")),
-        tags$div(tags$img(src = "www/homeImageAfrica4.png")),
+        tags$div(tags$img(src = "www/homeImageAfrica4.jpg")),
         tags$div(tags$img(src = "www/homeImageAmericas2.jpg")),
         tags$div(tags$img(src = "www/homeImageEurope3.jpg"))
       ),
@@ -70,7 +83,7 @@ mod_homeApp_ui <- function(id){
           # tags$h1("Biometrical Genetics Workflow (bioflow)"),
           tags$p(
             "The OneCGIAR biometrical genetics workflow or pipeline has been built to access methods for understanding or using evolutionary forces",
-            "(mutation, gene flow, migration and selection) such as automatic state-of-the-art genetic evaluation (selection force).",
+            "(mutation, gene flow, migration and selection) such as automatic state-of-the-art genetic evaluation (selection force) in decision-making.",
             "Designed to be database agnostic, it can retrieve data from the available phenotypic-pedigree databases (EBS, BMS, BreedBase),",
             "genotypic databases (GIGWA), and environmental databases (NASAPOWER), and carry the analytical procedures."
           )

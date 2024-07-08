@@ -66,9 +66,9 @@ get_h <- function() {
 
 suppressWarnings(tryCatch({
   if(file.exists("./outputs/result.RData")){
-    load("./outputs/resultMta.RData")
+    load("./outputs/resultMtaFlex.RData")
   }else{
-    load("resultMta.RData")
+    load("resultMtaFlex.RData")
   }
 }, error = function(e) {
   shinyjs::hide()
@@ -78,11 +78,11 @@ if (is.null(result)){
   # invisible(NULL)
 } else {
   # result$status <- result$status[1:6,]
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
+  idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
   idMta <- idMta[length(idMta)]
   pred <- result$predictions
   pred <- pred[pred$analysisId == idMta,]
-  traits <- unique(result$modeling[which(result$modeling$analysisId == idMta  & result$modeling$environment == "across"),"trait"]) # unique(pred$trait)
+  traits <- setdiff( unique(result$modeling[which(result$modeling$analysisId == idMta  & result$modeling$environment == "general"),"trait"]), "inputObject") 
   modeling <- result$modeling
   modelingFieldsIncludedInMta <- modeling[modeling$analysisId == idMta & modeling$parameter == "includedInMta", ]
 }
@@ -120,7 +120,7 @@ The following table aims to make a high-level assessment of the different types 
 if (is.null(result)){
   # invisible(NULL)
 } else {
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
+  idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
   idMta <- idMta[length(idMta)]
   # predictions
   pred.mta <- result$predictions
@@ -150,9 +150,9 @@ if (is.null(result)){
 }
 ```
 
+### Map of trials planted
 
-`r if(!is.null(result$data$weather)){"### Map of trials planted\n
-The following map allows you to assess the location where trials are planted.\n"}`
+The following map allows you to assess the location where trials are planted.
 
 ```{r, results='asis'}
 if (is.null(result)){
@@ -248,7 +248,7 @@ if (is.null(result)){
 if (is.null(result)){
   # invisible(NULL)
 } else {
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
+  idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
   idMta <- idMta[length(idMta)]
   idSta <- result$modeling[result$modeling$analysisId == idMta & result$modeling$trait == "inputObject","value"]
   # predictions
@@ -265,41 +265,33 @@ if (is.null(result)){
     for(iTrait in traits){
       cat("\n\n####", iTrait, "{.tabset .tabset-pills}       \n\n")
       goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == iTrait, "environment"]
-      temp.pred.box <- pred.sta.boxplot[pred.sta.boxplot$trait==iTrait & pred.sta.boxplot$environment %in% goodFields,]
-      meansEnv <- aggregate(predictedValue~environment, data=temp.pred.box, FUN=mean, na.rm=TRUE); colnames(meansEnv)[2] <- "envMean"
-      temp.pred.box <- merge(temp.pred.box,meansEnv, by="environment", all.x = TRUE) # merge env means
-      temp.r2Sta <- r2Sta[r2Sta$trait ==iTrait & r2Sta$environment %in% goodFields, ] # reliabilities
-      temp.pred.box <- merge(temp.pred.box,temp.r2Sta[,c("environment","value")], by="environment", all.x = TRUE) # merge reliabilities
-      # vv <- rep(1000, seq(0.5,1.5,0.5))
-      # temp.pred.box$vjust1 <- vv[1:nrow(temp.pred.box)]
-      p <- temp.pred.box %>%
-        ggplot2::ggplot() +
-        ggplot2::aes(x=envMean, y=predictedValue, fill = environment) +
-        ggplot2::geom_boxplot() +
-        ggplot2::labs(x = "Environmental mean", y = "Trait value") +
-        ggplot2::scale_fill_discrete(name = "") +
-        ggplot2::theme(legend.position = "bottom")  +
-        ggplot2::guides(fill=guide_legend(nrow=3,byrow=TRUE)) #+
-      # ggplot2::geom_text(data=temp.pred.box,aes(x= envMean, y = max(predictedValue) , label =round(value,2) ), position=position_dodge(width = 0.8),size = 3, vjust = 0.5,colour="black") 
+      if(length(goodFields) > 0){
+        temp.pred.box <- pred.sta.boxplot[pred.sta.boxplot$trait==iTrait & pred.sta.boxplot$environment %in% c("(Intercept)",goodFields, paste0("L.",goodFields) ),]
+        meansEnv <- aggregate(predictedValue~environment, data=temp.pred.box, FUN=mean, na.rm=TRUE); colnames(meansEnv)[2] <- "envMean"
+        temp.pred.box <- merge(temp.pred.box,meansEnv, by="environment", all.x = TRUE)
+        
+        p <- temp.pred.box %>%
+          ggplot2::ggplot() +
+          ggplot2::aes(x=envMean, y=predictedValue, fill = environment) +
+          ggplot2::geom_boxplot() +
+          ggplot2::labs(x = "Environmental mean", y = "Trait value") +
+          ggplot2::scale_fill_discrete(name = "") +
+          ggplot2::theme(legend.position = "bottom")  +
+          ggplot2::guides(fill=guide_legend(nrow=3,byrow=TRUE)) 
+        print(p)
+      }
       
-      # if(length(unique(temp.pred.box$designation)) > 200){ # go fixed format
-      print(p)
-      # }else{ # go dynamic
-      #   print(htmltools::tagList(plotly::ggplotly(p)))
-      # }
       
     }
     
   } else{ # display in website
     
-    if(length(unique(pred$designation)) > 200){ # go fixed format
-      shiny::renderPlot({
-        goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == input$traitMta, "environment"]
-        temp.pred.box <- pred.sta.boxplot[pred.sta.boxplot$trait==input$traitMta & pred.sta.boxplot$environment %in% goodFields,]
+    shiny::renderPlot({
+      goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == input$traitMta, "environment"]
+      if(length(goodFields) > 0){
+        temp.pred.box <- pred.sta.boxplot[pred.sta.boxplot$trait==input$traitMta & pred.sta.boxplot$environment %in% c("(Intercept)",goodFields, paste0("L.",goodFields) ),]
         meansEnv <- aggregate(predictedValue~environment, data=temp.pred.box, FUN=mean, na.rm=TRUE); colnames(meansEnv)[2] <- "envMean"
         temp.pred.box <- merge(temp.pred.box,meansEnv, by="environment", all.x = TRUE)
-        temp.r2Sta <- r2Sta[r2Sta$trait ==input$traitMta & r2Sta$environment %in% goodFields, ] # reliabilities
-        temp.pred.box <- merge(temp.pred.box,temp.r2Sta[,c("environment","value")], by="environment", all.x = TRUE) # merge reliabilities
         p <- temp.pred.box %>%
           ggplot() +
           aes(x=envMean, y=predictedValue, fill = environment) +
@@ -307,24 +299,12 @@ if (is.null(result)){
           labs(x = "Environmental mean", y = "Trait value") +
           scale_fill_discrete(name = "") +
           theme(legend.position = "bottom") +
-          guides(fill=guide_legend(nrow=3,byrow=TRUE)) # +
-        # ggplot2::geom_text(data=temp.pred.box,aes(x= envMean, y = max(predictedValue) , label =round(value,2) ), position=position_dodge(width = 0.8),size = 5, vjust = 0.5,colour="black")
+          guides(fill=guide_legend(nrow=3,byrow=TRUE)) 
         p
-      })
-    } else { # go dynamic
-      plotly::renderPlotly({
-        goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == input$traitMta, "environment"]
-        temp.pred.box <- pred.sta.boxplot[pred.sta.boxplot$trait==input$traitMta & pred.sta.boxplot$environment %in% goodFields,]
-        meansEnv <- aggregate(predictedValue~environment, data=temp.pred.box, FUN=mean, na.rm=TRUE); colnames(meansEnv)[2] <- "envMean"
-        temp.pred.box <- merge(temp.pred.box,meansEnv, by="environment", all.x = TRUE)
-        p <- plotly::plot_ly( data = temp.pred.box, y = ~predictedValue,
-                              x = ~envMean,  type = "box", color = ~environment
-        ) %>%  plotly::layout(# font=font.plot_ly,
-          xaxis=list( title="Environmental mean"), yaxis=list( title="Trait value") )
-        p
-      })
+      }
       
-    }
+    })
+    
   }
   
 }
@@ -370,45 +350,44 @@ if (is.null(result)){
       cat("\n\n####", iTrait, "{.tabset .tabset-pills}       \n\n")
       
       goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == iTrait, "environment"]
-      mydata2 <- mydata[which(mydata$trait == iTrait & mydata$environment %in% goodFields), ]
-      splitAggregate <- with(mydata2,  split(mydata2[,"designation"],mydata2[,"environment"]) ) # split by environment
-      splitAggregate <- lapply(splitAggregate,unique); nag <- length(splitAggregate) # get unique individual names
-      nagm <- matrix(0,nag,nag); rownames(nagm) <- colnames(nagm) <- names(splitAggregate) # prefilled matrix
-      for(i in 1:length(splitAggregate)){ # fill the matrix of intersection of individuals between pair of environments
-        for(j in 1:i){
-          nagm[i,j] <- length(intersect(splitAggregate[[i]],splitAggregate[[j]]))
+      if(length(goodFields) > 0){
+        mydata2 <- mydata[which(mydata$trait == iTrait & mydata$environment %in% goodFields), ]
+        splitAggregate <- with(mydata2,  split(mydata2[,"designation"],mydata2[,"environment"]) ) # split by environment
+        splitAggregate <- lapply(splitAggregate,unique); nag <- length(splitAggregate) # get unique individual names
+        nagm <- matrix(0,nag,nag); rownames(nagm) <- colnames(nagm) <- names(splitAggregate) # prefilled matrix
+        for(i in 1:length(splitAggregate)){ # fill the matrix of intersection of individuals between pair of environments
+          for(j in 1:i){
+            nagm[i,j] <- length(intersect(splitAggregate[[i]],splitAggregate[[j]]))
+          }
         }
+        nagm[upper.tri(nagm)] <- t(nagm)[upper.tri(nagm)] # fill the upper triangular
+        
+        mydata4 <- cgiarBase::matToTab(nagm) # matrix to a dataframe for plot
+        maxVal <- max(nagm, na.rm = TRUE) # get the maximum value found in the matrix of connectivity
+        p <- ggplot2::ggplot(data = mydata4, ggplot2::aes(Var2, Var1, fill = Freq))+
+          ggplot2::geom_tile(color = "white")+
+          ggplot2::scale_fill_gradient2(low = "firebrick", high = "#038542", mid = "gold",
+                                        midpoint = 60, limit = c(0,maxVal), space = "Lab",
+                                        name="Connectivity") +
+          ggplot2::theme_minimal()+
+          ggplot2::ylab("Environment") + ggplot2::xlab("Environment") +
+          ggplot2::coord_fixed() + 
+          ggplot2::coord_fixed() + 
+          ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.text.y = ggplot2::element_blank() ) 
+        if(nrow(nagm) < 15){ # if user wants to add text to the cells
+          p <- p + ggplot2::geom_text(ggplot2::aes(label = Freq), color = "white", size = 4)
+        }
+        # Basic histogram
+        mydata4$Group <- ifelse(mydata4$Freq < 31, "Low", ifelse(mydata4$Freq < 80, "Medium", "High"))
+        group.colors <- c(Low="firebrick",Medium="gold", High="#038542")
+        ub <- max(mydata4$Freq, na.rm = TRUE)
+        p2 <- ggplot(mydata4[which(mydata4$Var1 != mydata4$Var2),], aes(x=Freq, fill=Group)) + 
+          geom_histogram() + ggplot2::scale_x_continuous(limits = c(0,ub)) +
+          scale_fill_manual(values=group.colors) + ggplot2::xlab("Frequency")
+        # combine plots
+        print(htmltools::tagList( plotly::subplot(plotly::ggplotly(p), plotly::ggplotly(p2), nrows=1, shareY = TRUE, shareX = TRUE ) ) )
       }
-      nagm[upper.tri(nagm)] <- t(nagm)[upper.tri(nagm)] # fill the upper triangular
       
-      mydata4 <- cgiarBase::matToTab(nagm) # matrix to a dataframe for plot
-      maxVal <- max(nagm, na.rm = TRUE) # get the maximum value found in the matrix of connectivity
-      p <- ggplot2::ggplot(data = mydata4, ggplot2::aes(Var2, Var1, fill = Freq))+
-        ggplot2::geom_tile(color = "white")+
-        ggplot2::scale_fill_gradient2(low = "firebrick", high = "#038542", mid = "gold",
-                                      midpoint = 60, limit = c(0,maxVal), space = "Lab",
-                                      name="Connectivity") +
-        ggplot2::theme_minimal()+
-        ggplot2::ylab("Environment") + ggplot2::xlab("Environment") +
-        ggplot2::coord_fixed() + 
-        ggplot2::coord_fixed() + 
-        # ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, vjust = 1, size = 7, hjust = 1, color="black"))+
-        # ggplot2::theme(axis.text.y = ggplot2::element_text(angle = 0, vjust = 1, size = 7, hjust = 1, color="black"))
-        ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.text.y = ggplot2::element_blank() ) 
-      if(nrow(nagm) < 15){ # if user wants to add text to the cells
-        p <- p + ggplot2::geom_text(ggplot2::aes(label = Freq), color = "white", size = 4)
-      }
-      # Basic histogram
-      mydata4$Group <- ifelse(mydata4$Freq < 31, "Low", ifelse(mydata4$Freq < 80, "Medium", "High"))
-      group.colors <- c(Low="firebrick",Medium="gold", High="#038542")
-      ub <- max(mydata4$Freq, na.rm = TRUE)
-      p2 <- ggplot(mydata4[which(mydata4$Var1 != mydata4$Var2),], aes(x=Freq, fill=Group)) + 
-        geom_histogram() + ggplot2::scale_x_continuous(limits = c(0,ub)) +
-        scale_fill_manual(values=group.colors) + ggplot2::xlab("Frequency")
-      # combine plots
-      print(htmltools::tagList( plotly::subplot(plotly::ggplotly(p), plotly::ggplotly(p2), nrows=1, shareY = TRUE, shareX = TRUE ) ) )
-      # print(p) # static
-      # print(htmltools::tagList(plotly::ggplotly(p))) # dynamic
       
     }
     
@@ -417,48 +396,46 @@ if (is.null(result)){
     # shiny::renderPlot({ # static
     plotly::renderPlotly({ # dynamic
       goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == input$traitMtaConnect, "environment"]
-      mydata2 <- mydata[which(mydata$trait == input$traitMtaConnect & mydata$environment %in% goodFields), ]
-      splitAggregate <- with(mydata2,  split(mydata2[,"designation"],mydata2[,"environment"]) ) # split by environment
-      splitAggregate <- lapply(splitAggregate,unique); nag <- length(splitAggregate) # get unique individual names
-      nagm <- matrix(0,nag,nag); rownames(nagm) <- colnames(nagm) <- names(splitAggregate) # prefilled matrix
-      for(i in 1:length(splitAggregate)){ # fill the matrix of intersection of individuals between pair of environments
-        for(j in 1:i){
-          nagm[i,j] <- length(intersect(splitAggregate[[i]],splitAggregate[[j]]))
+      if(length(goodFields) > 0){
+        mydata2 <- mydata[which(mydata$trait == input$traitMtaConnect & mydata$environment %in% goodFields), ]
+        splitAggregate <- with(mydata2,  split(mydata2[,"designation"],mydata2[,"environment"]) ) # split by environment
+        splitAggregate <- lapply(splitAggregate,unique); nag <- length(splitAggregate) # get unique individual names
+        nagm <- matrix(0,nag,nag); rownames(nagm) <- colnames(nagm) <- names(splitAggregate) # prefilled matrix
+        for(i in 1:length(splitAggregate)){ # fill the matrix of intersection of individuals between pair of environments
+          for(j in 1:i){
+            nagm[i,j] <- length(intersect(splitAggregate[[i]],splitAggregate[[j]]))
+          }
         }
+        nagm[upper.tri(nagm)] <- t(nagm)[upper.tri(nagm)] # fill the upper triangular
+        
+        mydata4 <- cgiarBase::matToTab(nagm) # matrix to a dataframe for plot
+        maxVal <- max(nagm, na.rm = TRUE) # get the maximum value found in the matrix of connectivity
+        p <- ggplot2::ggplot(data = mydata4, ggplot2::aes(Var2, Var1, fill = Freq))+
+          ggplot2::geom_tile(color = "white")+
+          ggplot2::scale_fill_gradient2(low = "firebrick", high = "#038542", mid = "gold",
+                                        midpoint = 60, limit = c(0,maxVal), space = "Lab",
+                                        name="Connectivity") +
+          ggplot2::theme_minimal()+
+          ggplot2::ylab("Environment") + ggplot2::xlab("Environment") +
+          ggplot2::coord_fixed() + 
+          ggplot2::coord_fixed() + 
+          ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.text.y = ggplot2::element_blank() )
+        if(nrow(nagm) < 15){ # if user wants to add text to the cells
+          p <- p + ggplot2::geom_text(ggplot2::aes(label = Freq), color = "white", size = 4)
+        }
+        # Basic histogram
+        mydata4$Group <- ifelse(mydata4$Freq < 31, "Low", ifelse(mydata4$Freq < 80, "Medium", "High"))
+        group.colors <- c(Low="firebrick",Medium="gold", High="#038542")
+        ub <- max(mydata4$Freq, na.rm = TRUE)
+        p2 <- ggplot(mydata4[which(mydata4$Var1 != mydata4$Var2),], aes(x=Freq, fill=Group)) + 
+          geom_histogram() + ggplot2::scale_x_continuous(limits = c(0,ub)) +
+          scale_fill_manual(values=group.colors) + ggplot2::xlab("Frequency")
+        # combine plots
+        ply1 <- plotly::ggplotly(p)
+        ply2 <- plotly::ggplotly(p2)
+        plotly::subplot(ply1, ply2, nrows=1, shareY = TRUE, shareX = TRUE)
       }
-      nagm[upper.tri(nagm)] <- t(nagm)[upper.tri(nagm)] # fill the upper triangular
       
-      mydata4 <- cgiarBase::matToTab(nagm) # matrix to a dataframe for plot
-      maxVal <- max(nagm, na.rm = TRUE) # get the maximum value found in the matrix of connectivity
-      p <- ggplot2::ggplot(data = mydata4, ggplot2::aes(Var2, Var1, fill = Freq))+
-        ggplot2::geom_tile(color = "white")+
-        ggplot2::scale_fill_gradient2(low = "firebrick", high = "#038542", mid = "gold",
-                                      midpoint = 60, limit = c(0,maxVal), space = "Lab",
-                                      name="Connectivity") +
-        ggplot2::theme_minimal()+
-        ggplot2::ylab("Environment") + ggplot2::xlab("Environment") +
-        ggplot2::coord_fixed() + 
-        ggplot2::coord_fixed() + 
-        # ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, vjust = 1, size = 7, hjust = 1, color="black", face = "bold"))+
-        # ggplot2::theme(axis.text.y = ggplot2::element_text(angle = 0, vjust = 1, size = 7, hjust = 1, color="black", face="bold"))
-        ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.text.y = ggplot2::element_blank() )
-      if(nrow(nagm) < 15){ # if user wants to add text to the cells
-        p <- p + ggplot2::geom_text(ggplot2::aes(label = Freq), color = "white", size = 4)
-      }
-      # print(p) # static
-      # plotly::ggplotly(p) #dynamic
-      
-      # Basic histogram
-      mydata4$Group <- ifelse(mydata4$Freq < 31, "Low", ifelse(mydata4$Freq < 80, "Medium", "High"))
-      group.colors <- c(Low="firebrick",Medium="gold", High="#038542")
-      ub <- max(mydata4$Freq, na.rm = TRUE)
-      p2 <- ggplot(mydata4[which(mydata4$Var1 != mydata4$Var2),], aes(x=Freq, fill=Group)) + 
-        geom_histogram() + ggplot2::scale_x_continuous(limits = c(0,ub)) +
-        scale_fill_manual(values=group.colors) + ggplot2::xlab("Frequency")
-      # combine plots
-      ply1 <- plotly::ggplotly(p)
-      ply2 <- plotly::ggplotly(p2)
-      plotly::subplot(ply1, ply2, nrows=1, shareY = TRUE, shareX = TRUE)
       
     })
     
@@ -477,18 +454,20 @@ The following heatmap and histogram allows to assess the genetic correlations am
 if (is.null(result)){
   # invisible(NULL)
 } else {
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
+  idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
   idMta <- idMta[length(idMta)]
-  pred <- result$predictions
-  pred <- pred[pred$analysisId == idMta,]
-  traits <- unique(result$modeling[which(result$modeling$analysisId == idMta  & result$modeling$environment == "across"),"trait"])# unique(pred$trait)
-  if("params" %in% ls()){ # we will download the document
-    shinyjs::hide()
-  }else{
-    selectInput(ns("traitPredictionsCorrelation"),
-                label = "",
-                choices = traits
-    )
+  if( length( unique(result$predictions[result$predictions$analysisId == idMta, "environment"]) ) > 1 ){
+    pred <- result$predictions
+    pred <- pred[pred$analysisId == idMta,]
+    traits <- setdiff(unique(result$modeling[which(result$modeling$analysisId == idMta  & result$modeling$environment == "general"),"trait"]), "inputObject")
+    if("params" %in% ls()){ # we will download the document
+      shinyjs::hide()
+    }else{
+      selectInput(ns("traitPredictionsCorrelation"),
+                  label = "",
+                  choices = traits
+      )
+    }
   }
   
 }
@@ -499,109 +478,113 @@ if (is.null(result)){
 if (is.null(result)){
   # invisible(NULL)
 } else {
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
-  idMta <- idMta[length(idMta)]
-  idSta <- result$modeling[result$modeling$analysisId == idMta & result$modeling$trait == "inputObject","value"]
-  pred.sta <- result$predictions
-  pred.sta <- pred.sta[pred.sta$analysisId == idSta,]
-  # traits <- unique(pred.sta$trait)
-  predictions.gcorrE <- subset(pred.sta, select = c(trait,designation,environment,predictedValue))
-  envs <- unique(predictions.gcorrE[,"environment"])
-  addTextInPlots <- ifelse(length(envs) > 30, FALSE, TRUE)
-  if("params" %in% ls()){ # we will download the document
-    
-    cat(paste0("###   {.tabset .tabset-pills}    \n\n  "))
-    
-    for(iTrait in traits){
-      cat("\n\n####", iTrait, "{.tabset .tabset-pills}       \n\n")
+  
+  if( length( unique(result$predictions[result$predictions$analysisId == idMta, "environment"]) ) > 1 ){
+    idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
+    idMta <- idMta[length(idMta)]
+    idSta <- idMta 
+    pred.sta <- result$predictions
+    pred.sta <- pred.sta[pred.sta$analysisId == idSta,]
+    predictions.gcorrE <- subset(pred.sta, select = c(trait,designation,environment,predictedValue))
+    envs <- unique(predictions.gcorrE[,"environment"])
+    addTextInPlots <- ifelse(length(envs) > 30, FALSE, TRUE)
+    if("params" %in% ls()){ # we will download the document
       
-      goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == iTrait, "environment"]
-      predictions.gcorrE2 <- predictions.gcorrE[predictions.gcorrE$trait == iTrait & predictions.gcorrE$environment %in% goodFields , ]
-      wide <- stats::reshape(predictions.gcorrE2,
-                             direction = "wide", idvar = "designation",
-                             timevar = "environment", v.names = "predictedValue", sep= "")
-      colnames(wide) <- gsub("predictedValue","",colnames(wide))
-      wide2 <- as.data.frame(wide[,-c(1:2)]); colnames(wide2) <- colnames(wide)[-c(1:2)]
-      corr <- round(stats::cor(wide2, use="pairwise.complete.obs"),2)
-      mydata4 <- cgiarBase::matToTab(corr)
-      p <- ggplot2::ggplot(data = mydata4, ggplot2::aes(Var2, Var1, fill = Freq))+
-        ggplot2::geom_tile(color = "white")+
-        ggplot2::scale_fill_gradient2(low = "#E46726", high = "#038542", mid = "white",
-                                      midpoint = 0, limit = c(-1,1), space = "Lab",
-                                      name="Pearson\nCorrelation") +
-        ggplot2::theme_minimal()+
-        ggplot2::ylab("Environment") + ggplot2::xlab("Environment") +
-        ggplot2::coord_fixed() + 
-        # ggplot2::theme(strip.text.x = ggplot2::element_text(size=9, color="black"), 
-        #                axis.text.x = ggplot2::element_text(angle = 45, hjust=1, vjust = 1))
-        ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.text.y = ggplot2::element_blank() ) 
-      if(nrow(corr) < 15){ # if user wants to fill cell values
-        p <- p + ggplot2::geom_text(ggplot2::aes(label = round(Freq,2) ), color = "black", size = 4)
+      cat(paste0("###   {.tabset .tabset-pills}    \n\n  "))
+      
+      for(iTrait in traits){
+        cat("\n\n####", iTrait, "{.tabset .tabset-pills}       \n\n")
+        
+        # goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == iTrait, "environment"]     & predictions.gcorrE$environment %in% c("(Intercept)",goodFields, paste0("L.",goodFields) )
+        predictions.gcorrE2 <- predictions.gcorrE[predictions.gcorrE$trait == input$traitPredictionsCorrelation  , ]
+        wide <- stats::reshape(predictions.gcorrE2,
+                               direction = "wide", idvar = "designation",
+                               timevar = "environment", v.names = "predictedValue", sep= "")
+        colnames(wide) <- gsub("predictedValue","",colnames(wide))
+        wide2 <- as.data.frame(wide[,-c(1:2)]); colnames(wide2) <- colnames(wide)[-c(1:2)]
+        corr <- round(stats::cor(wide2, use="pairwise.complete.obs"),2)
+        mydata4 <- cgiarBase::matToTab(corr)
+        p <- ggplot2::ggplot(data = mydata4, ggplot2::aes(Var2, Var1, fill = Freq))+
+          ggplot2::geom_tile(color = "white")+
+          ggplot2::scale_fill_gradient2(low = "#E46726", high = "#038542", mid = "white",
+                                        midpoint = 0, limit = c(-1,1), space = "Lab",
+                                        name="Pearson\nCorrelation") +
+          ggplot2::theme_minimal()+
+          ggplot2::ylab("Environment") + ggplot2::xlab("Environment") +
+          ggplot2::coord_fixed() + 
+          # ggplot2::theme(strip.text.x = ggplot2::element_text(size=9, color="black"), 
+          #                axis.text.x = ggplot2::element_text(angle = 45, hjust=1, vjust = 1))
+          ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.text.y = ggplot2::element_blank() ) 
+        if(nrow(corr) < 15){ # if user wants to fill cell values
+          p <- p + ggplot2::geom_text(ggplot2::aes(label = round(Freq,2) ), color = "black", size = 4)
+        }
+        # Basic histogram
+        mydata4$Group <- ifelse(mydata4$Freq < 0, "Low", ifelse(mydata4$Freq < 0.2, "Medium", "High"))
+        group.colors <- c(Low="#E46726",Medium="white", High="#038542")
+        p2 <- ggplot(mydata4[which(mydata4$Var1 != mydata4$Var2),], aes(x=Freq, fill=Group)) + 
+          geom_histogram() + ggplot2::scale_x_continuous(limits = c(-1,1)) +
+          scale_fill_manual(values=group.colors) + ggplot2::xlab("Frequency")
+        # combine plots
+        print(htmltools::tagList( plotly::subplot(plotly::ggplotly(p), plotly::ggplotly(p2), nrows=1, shareY = TRUE, shareX = TRUE ) ) )
+        
       }
-      # Basic histogram
-      mydata4$Group <- ifelse(mydata4$Freq < 0, "Low", ifelse(mydata4$Freq < 0.2, "Medium", "High"))
-      group.colors <- c(Low="#E46726",Medium="white", High="#038542")
-      p2 <- ggplot(mydata4[which(mydata4$Var1 != mydata4$Var2),], aes(x=Freq, fill=Group)) + 
-        geom_histogram() + ggplot2::scale_x_continuous(limits = c(-1,1)) +
-        scale_fill_manual(values=group.colors) + ggplot2::xlab("Frequency")
-      # combine plots
-      print(htmltools::tagList( plotly::subplot(plotly::ggplotly(p), plotly::ggplotly(p2), nrows=1, shareY = TRUE, shareX = TRUE ) ) )
-      # print(p) # static
-      # print(htmltools::tagList(plotly::ggplotly(p))) # dynamic
+      
+    }else{
+      
+      plotly::renderPlotly({
+        # shiny::renderPlot({
+        # goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == input$traitPredictionsCorrelation, "environment"]     & predictions.gcorrE$environment %in% c("(Intercept)",goodFields, paste0("L.",goodFields) )
+        predictions.gcorrE2 <- predictions.gcorrE[predictions.gcorrE$trait == input$traitPredictionsCorrelation , ]
+        wide <- stats::reshape(predictions.gcorrE2,
+                               direction = "wide", idvar = "designation",
+                               timevar = "environment", v.names = "predictedValue", sep= "")
+        colnames(wide) <- gsub("predictedValue","",colnames(wide))
+        wide2 <- as.data.frame(wide[,-c(1:2)]); colnames(wide2) <- colnames(wide)[-c(1:2)]
+        corr <- round(stats::cor(wide2, use="pairwise.complete.obs"),2)
+        mydata4 <- cgiarBase::matToTab(corr)
+        p <- ggplot2::ggplot(data = mydata4, ggplot2::aes(Var2, Var1, fill = Freq))+
+          ggplot2::geom_tile(color = "white")+
+          ggplot2::scale_fill_gradient2(low = "#E46726", high = "#038542", mid = "white",
+                                        midpoint = 0, limit = c(-1,1), space = "Lab",
+                                        name="Pearson\nCorrelation") +
+          ggplot2::theme_minimal()+
+          ggplot2::ylab("Environment") + ggplot2::xlab("Environment") +
+          ggplot2::coord_fixed() +
+          # ggplot2::theme(strip.text.x = ggplot2::element_text(size=9, color="black"), 
+          #                axis.text.x = ggplot2::element_text(angle = 45, hjust=1, vjust = 1) )
+          ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.text.y = ggplot2::element_blank() ) 
+        if(nrow(corr) < 15){ # if user wants to fill cell values
+          p <- p + ggplot2::geom_text(ggplot2::aes(label = round(Freq,2) ), color = "black", size = 4)
+        }
+        # Basic histogram
+        mydata4$Group <- ifelse(mydata4$Freq < 0, "Low", ifelse(mydata4$Freq < 0.2, "Medium", "High"))
+        group.colors <- c(Low="#E46726",Medium="white", High="#038542")
+        p2 <- ggplot(mydata4[which(mydata4$Var1 != mydata4$Var2),], aes(x=Freq, fill=Group)) + 
+          geom_histogram() + ggplot2::scale_x_continuous(limits = c(-1,1)) +
+          scale_fill_manual(values=group.colors) + ggplot2::xlab("Frequency")
+        # combine plots
+        ply1 <- plotly::ggplotly(p)
+        ply2 <- plotly::ggplotly(p2)
+        plotly::subplot(ply1, ply2, nrows=1, shareY = TRUE, shareX = TRUE )
+        # p # static
+        # plotly::ggplotly(p) # dynamic
+      })
+      
       
     }
-    
   }else{
-    
-    plotly::renderPlotly({
-      # shiny::renderPlot({
-      goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == input$traitPredictionsCorrelation, "environment"]
-      predictions.gcorrE2 <- predictions.gcorrE[predictions.gcorrE$trait == input$traitPredictionsCorrelation & predictions.gcorrE$environment %in% goodFields , ]
-      wide <- stats::reshape(predictions.gcorrE2,
-                             direction = "wide", idvar = "designation",
-                             timevar = "environment", v.names = "predictedValue", sep= "")
-      colnames(wide) <- gsub("predictedValue","",colnames(wide))
-      wide2 <- as.data.frame(wide[,-c(1:2)]); colnames(wide2) <- colnames(wide)[-c(1:2)]
-      corr <- round(stats::cor(wide2, use="pairwise.complete.obs"),2)
-      mydata4 <- cgiarBase::matToTab(corr)
-      p <- ggplot2::ggplot(data = mydata4, ggplot2::aes(Var2, Var1, fill = Freq))+
-        ggplot2::geom_tile(color = "white")+
-        ggplot2::scale_fill_gradient2(low = "#E46726", high = "#038542", mid = "white",
-                                      midpoint = 0, limit = c(-1,1), space = "Lab",
-                                      name="Pearson\nCorrelation") +
-        ggplot2::theme_minimal()+
-        ggplot2::ylab("Environment") + ggplot2::xlab("Environment") +
-        ggplot2::coord_fixed() +
-        # ggplot2::theme(strip.text.x = ggplot2::element_text(size=9, color="black"), 
-        #                axis.text.x = ggplot2::element_text(angle = 45, hjust=1, vjust = 1) )
-        ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.text.y = ggplot2::element_blank() ) 
-      if(nrow(corr) < 15){ # if user wants to fill cell values
-        p <- p + ggplot2::geom_text(ggplot2::aes(label = round(Freq,2) ), color = "black", size = 4)
-      }
-      # Basic histogram
-      mydata4$Group <- ifelse(mydata4$Freq < 0, "Low", ifelse(mydata4$Freq < 0.2, "Medium", "High"))
-      group.colors <- c(Low="#E46726",Medium="white", High="#038542")
-      p2 <- ggplot(mydata4[which(mydata4$Var1 != mydata4$Var2),], aes(x=Freq, fill=Group)) + 
-        geom_histogram() + ggplot2::scale_x_continuous(limits = c(-1,1)) +
-        scale_fill_manual(values=group.colors) + ggplot2::xlab("Frequency")
-      # combine plots
-      ply1 <- plotly::ggplotly(p)
-      ply2 <- plotly::ggplotly(p2)
-      plotly::subplot(ply1, ply2, nrows=1, shareY = TRUE, shareX = TRUE )
-      # p # static
-      # plotly::ggplotly(p) # dynamic
-    })
-    
-    
+    cat("Only one level for environment found in predictions (you fitted a main effect model maybe?). Skipping correlation plot.")
   }
+  
   
 }
 ```
 
 <p>&nbsp;</p>
 
-`r if(length(result$metrics[result$metrics$analysisId == idMta & result$metrics$parameter == "nEnv" & result$metrics$value > 1, "trait"]) > 0){"### Biplot by trait\n
-The following graph allows to see the clustering of different genotypes in the TPE for each trait. This can help you identify clusters of environments and better define the TPE.\n"}`
+### Biplot by trait
+
+The following graph allows to see the clustering of different genotypes in the TPE for each trait. This can help you identify clusters of environments and better define the TPE.
 
 <p>&nbsp;</p>
 
@@ -609,28 +592,33 @@ The following graph allows to see the clustering of different genotypes in the T
 if (is.null(result)){
   # invisible(NULL)
 } else {
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
-  idMta <- idMta[length(idMta)]
-  pred.mta <- result$predictions
-  pred.mta <- pred.mta[pred.mta$analysisId == idMta,]
-  modeling <- result$modeling
-  modelingFieldsIncludedInMta <- modeling[modeling$analysisId == idMta & modeling$parameter == "includedInMta", ]
-  metrics <- result$metrics
-  traitsBiplot1 <- setdiff(unique(modeling[modeling$analysisId == idMta, "trait" ]), "inputObject" )
-  traitsBiplot2 <- metrics[metrics$analysisId == idMta & metrics$parameter == "nEnv" & metrics$value > 1, "trait"]
-  traitsBiplotAll <- intersect(traitsBiplot1, traitsBiplot2)
-  # traitsBiplotAll <- metrics[metrics$analysisId == idMta & metrics$parameter == "nEnv" & metrics$value > 1, "trait"]
   
-  if("params" %in% ls()){ # we will download the document
-    shinyjs::hide()
-  }else{
-    if(length(result$metrics[result$metrics$analysisId == idMta & result$metrics$parameter == "nEnv" & result$metrics$value > 1, "trait"]) > 0){
-      selectInput(ns("traitBiplot"),
-                  label = "",
-                  choices = traitsBiplotAll
-      )
+  idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
+  idMta <- idMta[length(idMta)]
+  
+  if( length( unique(result$predictions[result$predictions$analysisId == idMta, "environment"]) ) > 2 ){
+    pred.mta <- result$predictions
+    pred.mta <- pred.mta[pred.mta$analysisId == idMta,]
+    modeling <- result$modeling
+    modelingFieldsIncludedInMta <- modeling[modeling$analysisId == idMta & modeling$parameter == "includedInMta", ]
+    metrics <- result$metrics
+    traitsBiplot1 <- setdiff(unique(modeling[modeling$analysisId == idMta, "trait" ]), "inputObject" )
+    traitsBiplot2 <- metrics[metrics$analysisId == idMta & metrics$parameter == "nEnv" & metrics$value > 1, "trait"]
+    traitsBiplotAll <- intersect(traitsBiplot1, traitsBiplot2)
+    
+    if("params" %in% ls()){ # we will download the document
+      shinyjs::hide()
+    }else{
+      if(length(result$metrics[result$metrics$analysisId == idMta & result$metrics$parameter == "nEnv" & result$metrics$value > 1, "trait"]) > 0){
+        selectInput(ns("traitBiplot"),
+                    label = "",
+                    choices = traitsBiplotAll
+        )
+      }
     }
+    
   }
+  
 }
 
 ```
@@ -641,9 +629,9 @@ if (is.null(result)){
   # invisible(NULL)
 } else {
   
-  if(length(result$metrics[result$metrics$analysisId == idMta & result$metrics$parameter == "nEnv" & result$metrics$value > 1, "trait"]) > 0){
+  if( length( unique(result$predictions[result$predictions$analysisId == idMta, "environment"]) ) > 2 ){
     
-    idSta <- result$modeling[result$modeling$analysisId == idMta & result$modeling$trait == "inputObject","value"]
+    idSta <- idMta#result$modeling[result$modeling$analysisId == idMta & result$modeling$trait == "inputObject","value"]
     pred.sta <- result$predictions
     pred.sta <- pred.sta[pred.sta$analysisId == idSta,]
     
@@ -654,21 +642,14 @@ if (is.null(result)){
       for(iTrait in traitsBiplotAll){
         cat("\n\n####", iTrait, "{.tabset .tabset-pills}       \n\n")
         
-        goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == iTrait, "environment"]
-        pred.mta.biplot <- reshape(pred.sta[which(pred.sta$trait == iTrait & pred.sta$environment %in% goodFields ),c("designation","environment","predictedValue")], 
+        # goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == iTrait, "environment"]      & pred.sta$environment %in% c(goodFields, paste0("L.",goodFields))
+        pred.mta.biplot <- reshape(pred.sta[which(pred.sta$trait == iTrait  ),c("designation","environment","predictedValue")], 
                                    direction = "wide", idvar = "designation", timevar = "environment")
         
         rownames(pred.mta.biplot) <- pred.mta.biplot[,"designation"]
         pred.mta.biplot <- pred.mta.biplot[,-1]
         names(pred.mta.biplot) <- gsub("predictedValue.","",names(pred.mta.biplot))
-        
-        # keep only 
-        missing <- apply(pred.mta.biplot,1, function(x){length(which(is.na(x)))/length(x)})
-        pred.mta.biplot <- pred.mta.biplot[which(missing < 0.8),]
-        missing <- apply(pred.mta.biplot,2, function(x){length(which(is.na(x)))/length(x)})
-        pred.mta.biplot <- pred.mta.biplot[,which(missing < 0.8)]
-        pred.mta.biplot <- apply(pred.mta.biplot,2, sommer::imputev)
-        # pred.mta.biplot <- na.omit(pred.mta.biplot[,2:min(c(ncol(pred.mta.biplot),5))])
+        pred.mta.biplot <- pred.mta.biplot[which(apply(pred.mta.biplot,1,sommer::propMissing) == 0),,drop=FALSE]
         prin_comp <- prcomp(pred.mta.biplot, rank = 2)
         components <- prin_comp[["x"]]
         components <- data.frame(components)
@@ -706,22 +687,14 @@ if (is.null(result)){
     }else{
       
       plotly::renderPlotly({
-        goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == input$traitBiplot, "environment"]
-        pred.mta.biplot <- reshape(pred.sta[which(pred.sta$trait == input$traitBiplot & pred.sta$environment %in% goodFields ),c("designation","environment","predictedValue")], 
+        # goodFields <- modelingFieldsIncludedInMta[modelingFieldsIncludedInMta$value == "TRUE" & modelingFieldsIncludedInMta$trait == input$traitBiplot, "environment"]      & pred.sta$environment %in% c(goodFields, paste0("L.",goodFields))
+        pred.mta.biplot <- reshape(pred.sta[which(pred.sta$trait == input$traitBiplot   ),c("designation","environment","predictedValue")], 
                                    direction = "wide", idvar = "designation", timevar = "environment")
         
         rownames(pred.mta.biplot) <- pred.mta.biplot[,"designation"]
         pred.mta.biplot <- pred.mta.biplot[,-1, drop=FALSE]
         names(pred.mta.biplot) <- gsub("predictedValue.","",names(pred.mta.biplot))
-        
-        # keep only 
-        missing <- apply(pred.mta.biplot,1, function(x){length(which(is.na(x)))/length(x)})
-        pred.mta.biplot <- pred.mta.biplot[which(missing < 0.8),, drop=FALSE]
-        missing <- apply(pred.mta.biplot,2, function(x){length(which(is.na(x)))/length(x)})
-        pred.mta.biplot <- pred.mta.biplot[,which(missing < 0.8), drop=FALSE]
-        pred.mta.biplot <- apply(pred.mta.biplot,2, sommer::imputev)
-        # pred.mta.biplot <- na.omit(pred.mta.biplot[,2:min(c(ncol(pred.mta.biplot),5))])
-        
+        pred.mta.biplot <- pred.mta.biplot[which(apply(pred.mta.biplot,1,sommer::propMissing) == 0),,drop=FALSE]
         prin_comp <- prcomp(pred.mta.biplot, rank = 2)
         components <- prin_comp[["x"]]
         components <- data.frame(components)
@@ -760,10 +733,13 @@ if (is.null(result)){
       
     }
     
+  }else{
+    cat("Only one level for environment found in predictions (you fitted a main effect or a Finlay-Wilkinson model maybe?). Skipping biplot.")
   }
   
 }
 ```
+
 
 <p>&nbsp;</p>
 
@@ -777,7 +753,7 @@ if (is.null(result)){
   cat(".")
 } else {
   myMetrics <- result$metrics
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"];
+  idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"];
   idMta <- idMta[length(idMta)]
   parameters <- myMetrics[which(myMetrics$analysisId == idMta),"parameter"]
   parameters <- setdiff(unique(parameters),"CV")
@@ -811,11 +787,11 @@ if (is.null(result)){
       cat("\n\n####", iParam, "{.tabset .tabset-pills}       \n\n")
       
       mydata2 = myMetrics2[which(myMetrics2$parameter %in% iParam),]
-      p <- ggplot(data=mydata2, ggplot2::aes(x=trait, y=value, fill=trait)) +
-        ggplot2::geom_bar(stat="identity", position=ggplot2::position_dodge()) +
+      p <- ggplot2::ggplot(data=mydata2, ggplot2::aes(x=environment, y=value, fill=environment)) +
+        ggplot2::geom_bar(stat="identity", position=ggplot2::position_dodge()) + ggplot2::facet_wrap(~trait)+
         ggplot2::theme(strip.text.x = ggplot2::element_text(size=9, color="black"), 
                        axis.text.x = ggplot2::element_text(angle = 45, hjust=1, vjust = 1), legend.position = "bottom") +
-        ggplot2::labs(x="Trait", y="Parameter value")
+        ggplot2::labs(x="Environment", y="Parameter value") 
       print(p)
       cat("\n")
     }
@@ -824,11 +800,11 @@ if (is.null(result)){
     
     shiny::renderPlot({
       mydata2 = myMetrics2[which(myMetrics2$parameter %in% input$parameterMetrics2),]
-      p <- ggplot2::ggplot(data=mydata2, ggplot2::aes(x=trait, y=value, fill=trait)) +
-        ggplot2::geom_bar(stat="identity", position=ggplot2::position_dodge()) +
+      p <- ggplot2::ggplot(data=mydata2, ggplot2::aes(x=environment, y=value, fill=environment)) +
+        ggplot2::geom_bar(stat="identity", position=ggplot2::position_dodge()) + ggplot2::facet_wrap(~trait)+
         ggplot2::theme(strip.text.x = ggplot2::element_text(size=9, color="black"), 
                        axis.text.x = ggplot2::element_text(angle = 45, hjust=1, vjust = 1), legend.position = "bottom") +
-        ggplot2::labs(x="Trait", y="Parameter value") 
+        ggplot2::labs(x="Environment", y="Parameter value") 
       p
     })
     
@@ -843,26 +819,28 @@ The following graph allows you to assess the proportion of variance going to dif
 
 <p>&nbsp;</p>
 
+
 ```{r, results='asis'}
 if (is.null(result)){
   # invisible(NULL)
 } else {
-  idMtaVC <- result$status[which(result$status$module == "mta"),"analysisId"]
+  idMtaVC <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
   idMtaVC <- idMtaVC[length(idMtaVC)]
-  traitsvc <- unique(result$modeling[which(result$modeling$analysisId == idMtaVC  & result$modeling$environment == "across"),"trait"])
-  covariatesvc <- unique(result$metadata$weather[result$metadata$weather$parameter == "trait", "value" ]) # unique(result$metadata$weather$trait)
+  traitsvc <- unique(result$modeling[which(result$modeling$analysisId == idMtaVC  & result$modeling$environment == "general"),"trait"])
+  traitsvc <- setdiff(traitsvc,"inputObject")
   df2 <- result$metrics
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"];
-  idMta <- idMta[length(idMta)]
-  df2 <- df2[df2$analysisId==idMta,]
-  df2 <- df2[df2$parameter %in% c("Vg","Vr","Vp"), ]
+  df2 <- df2[df2$analysisId==idMtaVC,]
+  grid <- expand.grid(result$metadata$pheno$parameter,result$metadata$pheno$parameter)
+  inters <- apply(grid,1, function(x){paste(x,collapse = ":")})
+  df2 <- df2[df2$parameter %in% c(paste0("V.",c(result$metadata$pheno$parameter, inters)),"V.Residual"), ]
   df2$traitOriginal <-  df2$trait
+  covariatesvc <- unique(result$metadata$weather[result$metadata$weather$parameter == "trait", "value" ]) #unique(result$metadata$weather$trait)
   for(iCov in covariatesvc){
     df2$traitOriginal <- gsub(paste0("-",iCov),"",df2$traitOriginal)
     df2$traitOriginal <- gsub(paste0(iCov),"",df2$traitOriginal)
     df2$traitOriginal <- gsub("_QTL","",df2$traitOriginal) # remove the QTL legend in this particular case
   }
-  df2$parameterOriginal <- df2$trait
+  df2$parameterOriginal <- df2$parameter
   for(iCov in covariatesvc){ 
     provTrait <- gsub(paste0( "*",iCov), "", df2$parameterOriginal)
     df2$parameterOriginal <- apply(data.frame(provTrait,df2$parameterOriginal),1,function(x){gsub(x[1], "", x[2])})
@@ -882,12 +860,12 @@ if (is.null(result)){
     df3$valuePropCum[iRow] <- sum(df3$valueProp[nrow(df3):iRow])
   }
   df3$valuePropCum <- df3$valuePropCum - (ceiling(df3$valuePropCum) - 1)
-  
+  df3$parameterOriginal2 <- paste(df3$parameterOriginal, df3$environment, sep="_")
   
   if("params" %in% ls()){ # we will download the document
     
     cat("\n\n###  {.tabset .tabset-pills}       \n\n")
-    p <- ggplot2::ggplot(data=df3, ggplot2::aes(x=traitOriginal, y=valueProp, fill=parameterOriginal)) +
+    p <- ggplot2::ggplot(data=df3, ggplot2::aes(x=traitOriginal, y=valueProp, fill=parameterOriginal2)) +
       ggplot2::geom_bar(stat="identity") + ggplot2::labs(fill="Variance component") +
       ggplot2::xlab("Traits") + ggplot2::ylab("Proportion of variance") +
       ggplot2::scale_fill_brewer(palette="Accent") +
@@ -902,7 +880,7 @@ if (is.null(result)){
   }else{
     
     shiny::renderPlot({
-      p <- ggplot2::ggplot(data=df3, ggplot2::aes(x=traitOriginal, y=valueProp, fill=parameterOriginal)) +
+      p <- ggplot2::ggplot(data=df3, ggplot2::aes(x=traitOriginal, y=valueProp, fill=parameterOriginal2)) +
         ggplot2::geom_bar(stat="identity") + ggplot2::labs(fill="Variance component") +
         ggplot2::xlab("Traits") + ggplot2::ylab("Proportion of variance") +
         ggplot2::scale_fill_brewer(palette="Accent") +
@@ -919,7 +897,7 @@ if (is.null(result)){
 
 <p>&nbsp;</p>
 
-### Across-environment merit estimates of top entries
+### Merit estimates of top entries
 
 In the left-side plot you can observe the comparison between the top 100 entries from each entry type category for the different traits. If a category has less than a 100 entries all individuals are displayed. This should allow you to identify the entries that could potentially become parents or nominated for advanced stages of evaluation. We would recommend you to wait until a selection index is calculated. In the right-side plot you can see a boxplot of the entire distribution of values for each entryType category so you know until which trait-values the rest of the entries that are not plotted in the left-side plot reach. 
 
@@ -929,18 +907,25 @@ if (is.null(result)){
   # invisible(NULL)
 } else {
   result$status <- result$status#[1:6,]
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
+  idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
   idMta <- idMta[length(idMta)]
   pred <- result$predictions
   pred <- pred[pred$analysisId == idMta,]
   traits <- unique(pred$trait)
+  envs2 <- unique(pred$environment)
   
   if("params" %in% ls()){ # we will download the document
     shinyjs::hide()
   }else{
-    selectInput(ns("traitMta2"),
-                label = "",
-                choices = traits
+    inputPanel(
+      selectInput(ns("traitMta2"),
+                  label = "Trait",
+                  choices = traits
+      ),
+      selectInput(ns("envCovMta2"),
+                  label = "Environment",
+                  choices = envs2
+      ),
     )
   }
 }
@@ -957,63 +942,66 @@ if (is.null(result)){
     
     for(iTrait in traits){
       cat("\n\n####", iTrait, "{.tabset .tabset-pills}       \n\n")
-      
-      temp.pred.box <- pred[pred$trait== iTrait,]
-      temp.pred.box$entryTypeSimple <- LETTERS[as.numeric(as.factor(temp.pred.box$entryType))]
-      
-      ub <- max(temp.pred.box$predictedValue + temp.pred.box$stdError, na.rm = TRUE)
-      lb <- min(temp.pred.box$predictedValue - temp.pred.box$stdError, na.rm = TRUE)
-      
-      p1 <- ggplot2::ggplot(temp.pred.box, ggplot2::aes(x=reorder(entryType, -predictedValue), y=predictedValue) ) +
-        ggplot2::geom_boxplot(alpha = 0.5, show.legend = TRUE, ggplot2::aes(colour=factor(entryTypeSimple))) +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, vjust = 0.5, size = 7, face = "bold"), legend.position = "bottom", legend.title = ggplot2::element_blank() ) + 
-        ggplot2::labs(x="", y="Trait value", color="Entry type") +  
-        ggplot2::guides(colour = guide_legend(nrow = ceiling(length(unique(temp.pred.box$entryType))/3) )) +
-        ggplot2::scale_y_continuous(limits = c(lb,ub) ) 
-      
-      temp.pred.box.list <- split(temp.pred.box, temp.pred.box$entryType)
-      temp.pred.box.list <- lapply(temp.pred.box.list, function(x){
-        x <- x[with(x, order(-predictedValue)), ]
-        x <- x[1:min(c(nrow(x), 100)),]
-        return(x)
-      })
-      temp.pred.box2 <- do.call(rbind, temp.pred.box.list)
-      temp.pred.box2$entryTypeSimple <- LETTERS[as.numeric(as.factor(temp.pred.box2$entryType))]
-      
-      p2 <- ggplot2::ggplot(
-        data = temp.pred.box2,
-        mapping = ggplot2::aes(
-          x = reorder(designation, -predictedValue),
-          y = predictedValue,
-          col = entryTypeSimple,
-          text = paste(
-            paste0('<br>', "designation: ", designation),
-            paste0('<br>', "entry type: ", entryType),
-            paste0('<br>', "predicted value: ", round(predictedValue, 4)),
-            paste0('<br>', "standard error: ", round(stdError, 4)),
-            # paste0("<br>95% CI: (", round(predictedValue - CI, 2) , ", ",
-            #        round(predictedValue + CI, 2), ")")))) +
-            paste0("<br>predVal +- stdError: (", round(predictedValue - stdError, 2) , ", ",
-                   round(predictedValue + stdError, 4), ")")))) +
-        ggplot2::theme_classic() +  ggplot2::geom_point() +
-        ggplot2::geom_errorbar(ggplot2::aes(ymax = predictedValue + stdError,
-                                            ymin = predictedValue - stdError), position = ggplot2::position_dodge(0.5),
-                               width = 0.10) +
-        ggplot2::labs(title = "", x = "Designation", y = "Predicted value", color = "Entry type") +
-        ggplot2::theme(axis.text.x = element_text(angle = 45, vjust = 0.5, size = 7, face = "bold"), legend.position = "bottom", legend.title = element_blank() ) +  
-        ggplot2::guides(colour = guide_legend(nrow = ceiling(length(unique(temp.pred.box2$entryType))/3) )) +  ggplot2::scale_y_continuous(limits = c(lb,ub) ) 
-      
-      print(htmltools::tagList( plotly::subplot(plotly::ggplotly(p2), plotly::ggplotly(p1), shareX = TRUE, nrows=1, widths = c(0.75,0.25) ) ) )
-      
-      cat("\n")
-      cat("\n")
+      for(iEnv in envs2){
+        cat("\n\n#####", iEnv, "{.tabset .tabset-pills}       \n\n")
+        temp.pred.box <- pred[pred$trait== iTrait,]
+        temp.pred.box <- temp.pred.box[temp.pred.box$environment== iEnv,]
+        temp.pred.box$entryTypeSimple <- LETTERS[as.numeric(as.factor(temp.pred.box$entryType))]
+        
+        ub <- max(temp.pred.box$predictedValue + temp.pred.box$stdError, na.rm = TRUE)
+        lb <- min(temp.pred.box$predictedValue - temp.pred.box$stdError, na.rm = TRUE)
+        
+        p1 <- ggplot2::ggplot(temp.pred.box, ggplot2::aes(x=reorder(entryType, -predictedValue), y=predictedValue) ) +
+          ggplot2::geom_boxplot(alpha = 0.5, show.legend = TRUE, ggplot2::aes(colour=factor(entryTypeSimple))) +
+          ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, vjust = 0.5, size = 7, face = "bold"), legend.position = "bottom", legend.title = ggplot2::element_blank() ) + 
+          ggplot2::labs(x="", y="Trait value", color="Entry type") +  
+          ggplot2::guides(colour = guide_legend(nrow = ceiling(length(unique(temp.pred.box$entryType))/3) )) +
+          ggplot2::scale_y_continuous(limits = c(lb,ub) ) 
+        
+        temp.pred.box.list <- split(temp.pred.box, temp.pred.box$entryType)
+        temp.pred.box.list <- lapply(temp.pred.box.list, function(x){
+          x <- x[with(x, order(-predictedValue)), ]
+          x <- x[1:min(c(nrow(x), 100)),]
+          return(x)
+        })
+        temp.pred.box2 <- do.call(rbind, temp.pred.box.list)
+        temp.pred.box2$entryTypeSimple <- LETTERS[as.numeric(as.factor(temp.pred.box2$entryType))]
+        
+        p2 <- ggplot2::ggplot(
+          data = temp.pred.box2,
+          mapping = ggplot2::aes(
+            x = reorder(designation, -predictedValue),
+            y = predictedValue,
+            col = entryTypeSimple,
+            text = paste(
+              paste0('<br>', "designation: ", designation),
+              paste0('<br>', "entry type: ", entryType),
+              paste0('<br>', "predicted value: ", round(predictedValue, 4)),
+              paste0('<br>', "standard error: ", round(stdError, 4)),
+              # paste0("<br>95% CI: (", round(predictedValue - CI, 2) , ", ",
+              #        round(predictedValue + CI, 2), ")")))) +
+              paste0("<br>predVal +- stdError: (", round(predictedValue - stdError, 2) , ", ",
+                     round(predictedValue + stdError, 4), ")")))) +
+          ggplot2::theme_classic() +  ggplot2::geom_point() +
+          ggplot2::geom_errorbar(ggplot2::aes(ymax = predictedValue + stdError,
+                                              ymin = predictedValue - stdError), position = ggplot2::position_dodge(0.5),
+                                 width = 0.10) +
+          ggplot2::labs(title = "", x = "Designation", y = "Predicted value", color = "Entry type") +
+          ggplot2::theme(axis.text.x = element_text(angle = 45, vjust = 0.5, size = 7, face = "bold"), legend.position = "bottom", legend.title = element_blank() ) +  
+          ggplot2::guides(colour = guide_legend(nrow = ceiling(length(unique(temp.pred.box2$entryType))/3) )) +  ggplot2::scale_y_continuous(limits = c(lb,ub) ) 
+        
+        print(htmltools::tagList( plotly::subplot(plotly::ggplotly(p2), plotly::ggplotly(p1), shareX = TRUE, nrows=1, widths = c(0.75,0.25) ) ) )
+        
+        cat("\n")
+        cat("\n")
+      }
     }
     
   }else{
     
     plotly::renderPlotly({
       
-      temp.pred.box <- pred[pred$trait== input$traitMta2,]
+      temp.pred.box <- pred[pred$trait== input$traitMta2 & pred$environment == input$envCovMta2,]
       temp.pred.box$entryTypeSimple <- LETTERS[as.numeric(as.factor(temp.pred.box$entryType))]
       
       ub <- max(temp.pred.box$predictedValue + temp.pred.box$stdError, na.rm = TRUE)
@@ -1074,55 +1062,61 @@ if (is.null(result)){
 <p>&nbsp;</p>
 
 ```{r }
-idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
+idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
 idMta <- idMta[length(idMta)]
 pred <- result$predictions
 pred <- pred[pred$analysisId == idMta,]
-traits <- unique(result$modeling[which(result$modeling$analysisId == idMta  & result$modeling$environment == "across"),"trait"]) # unique(pred$trait)
+traits <- setdiff( unique(result$modeling[which(result$modeling$analysisId == idMta  & result$modeling$environment == "general"),"trait"]), "inputObject")
 traitsInPreds <- unique(pred$trait)
 ```
 
-`r if( any( unlist(lapply( as.list( unique(result$metadata$weather[result$metadata$weather$parameter == "trait", "value" ]) ), function(x){
-sum(grepl(x,traitsInPreds))
-})) > 0 )
-) {"### Trait by trait-sensitivity plots\n
-The following plots allow you to identify individuals with high performance for a trait but also with high or low sensitivity to the environmental means from a weather covariate or just the environmental means.\n"}`
+
+### Trait by trait-sensitivity plots
+
+The following plots allow you to identify individuals with high performance for a trait but also with high or low sensitivity to the environmental means from a weather covariate or just the environmental means.
 
 ```{r }
 if (is.null(result)){
   # invisible(NULL)
 } else {
-  result$status <- result$status#[1:6,]
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
-  idMta <- idMta[length(idMta)]
-  pred <- result$predictions
-  pred <- pred[pred$analysisId == idMta,]
-  traits <- unique(result$modeling[which(result$modeling$analysisId == idMta  & result$modeling$environment == "across"),"trait"]) # unique(pred$trait)
-  # traits <- unique(pred$trait)
-  traitsInPreds <- unique(pred$trait)
-  covariates <- unique(result$metadata$weather[result$metadata$weather$parameter == "trait", "value" ]) # unique(result$metadata$weather$trait)
-  modelUsed <- result$modeling[which(result$modeling$analysisId == idMta  & result$modeling$parameter == "randomFormula"),"value"]
-  isRRBLUP <- ifelse(length(grep("QTL",modelUsed)) > 0, TRUE, FALSE)
   
-  if("params" %in% ls()){ # we will download the document
-    shinyjs::hide()
-  }else{
-    if( any( unlist(lapply( as.list( unique(result$metadata$weather[result$metadata$weather$parameter == "trait", "value" ]) ), function(x){
-      sum(grepl(x,traitsInPreds))
-    })) > 0 )    ){ # if there is envIndex fitted
-      
-      inputPanel(
-        selectInput(ns("traitMta3"),
-                    label = "Trait",
-                    choices = traits
-        ),
-        selectInput(ns("envCovMta3"),
-                    label = "Covariate",
-                    choices = covariates
-        ),
-      )
+  if( any( unlist(lapply( as.list( unique(result$metadata$weather[result$metadata$weather$parameter == "trait", "value" ]) ), function(x){
+    sum(grepl(x,traitsInPreds))
+  })) > 0 )
+  ){
+    result$status <- result$status#[1:6,]
+    idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
+    idMta <- idMta[length(idMta)]
+    pred <- result$predictions
+    pred <- pred[pred$analysisId == idMta,]
+    traits <- unique(result$modeling[which(result$modeling$analysisId == idMta  & result$modeling$environment == "across"),"trait"]) # unique(pred$trait)
+    # traits <- unique(pred$trait)
+    traitsInPreds <- unique(pred$trait)
+    covariates <- unique(result$metadata$weather[result$metadata$weather$parameter == "trait", "value" ]) # unique(result$metadata$weather$trait)
+    modelUsed <- result$modeling[which(result$modeling$analysisId == idMta  & result$modeling$parameter == "randomFormula"),"value"]
+    isRRBLUP <- ifelse(length(grep("QTL",modelUsed)) > 0, TRUE, FALSE)
+    
+    if("params" %in% ls()){ # we will download the document
+      shinyjs::hide()
+    }else{
+      if( any( unlist(lapply( as.list( unique(result$metadata$weather[result$metadata$weather$parameter == "trait", "value" ]) ), function(x){
+        sum(grepl(x,traitsInPreds))
+      })) > 0 )    ){ # if there is envIndex fitted
+        
+        inputPanel(
+          selectInput(ns("traitMta3"),
+                      label = "Trait",
+                      choices = traits
+          ),
+          selectInput(ns("envCovMta3"),
+                      label = "Covariate",
+                      choices = covariates
+          ),
+        )
+      }
     }
   }
+  
 }
 ```
 
@@ -1203,6 +1197,8 @@ if (is.null(result)){
         })
       }
     }
+  }else{
+    cat("No random regression model found. Skipping sensitivity plot.")
   }
 }
 ```
@@ -1218,7 +1214,7 @@ if (is.null(result)){
   # invisible(NULL)
 } else {
   result$status <- result$status#[1:6,]
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
+  idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
   idMta <- idMta[length(idMta)]
   pred <- result$predictions
   pred <- pred[pred$analysisId == idMta,]
@@ -1415,55 +1411,101 @@ The following heatmap and histogram allows to see the genetic correlations among
 
 <p>&nbsp;</p>
 
+```{r }
+if (is.null(result)){
+  # invisible(NULL)
+} else {
+  result$status <- result$status#[1:6,]
+  idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
+  idMta <- idMta[length(idMta)]
+  pred <- result$predictions
+  pred <- pred[pred$analysisId == idMta,]
+  traits <- unique(pred$trait)
+  envs3 <- unique(pred$environment)
+  
+  if("params" %in% ls()){ # we will download the document
+    shinyjs::hide()
+  }else{
+    inputPanel(
+      selectInput(ns("envCovMtaTraits"),
+                  label = "Environment",
+                  choices = envs3
+      ),
+    )
+  }
+}
+```
+
 ```{r, results='asis'}
 if (is.null(result)){
   # invisible(NULL)
 } else {
   
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
-  idMta <- idMta[length(idMta)]
-  pred.mta <- result$predictions
-  pred.mta <- pred.mta[pred.mta$analysisId == idMta,]
-  predictions.gcorrT <- subset(pred.mta, select = c(trait,designation,environment,predictedValue))
   
-  wide <- stats::reshape(predictions.gcorrT,
-                         direction = "wide", idvar = "designation",
-                         timevar = "trait", v.names = "predictedValue", sep= "")
-  colnames(wide) <- gsub("predictedValue","",colnames(wide))
-  wide2 <- as.data.frame(wide[,-c(1:2)]); colnames(wide2) <- colnames(wide)[-c(1:2)]
-  corr <- round(stats::cor(wide2, use="pairwise.complete.obs"),2)
-  mydata4 <- cgiarBase::matToTab(corr)
-  if(nrow(corr) > 1){
-    if("params" %in% ls()){ # we will download the document
-      
-      p <- ggplot2::ggplot(data = mydata4, ggplot2::aes(Var2, Var1, fill = Freq))+
-        ggplot2::geom_tile(color = "white")+
-        ggplot2::scale_fill_gradient2(low = "#E46726", high = "#038542", mid = "white",
-                                      midpoint = 0, limit = c(-1,1), space = "Lab",
-                                      name="Pearson\nCorrelation") +
-        ggplot2::theme_minimal()+
-        ggplot2::ylab("") + ggplot2::xlab("") +
-        ggplot2::coord_fixed() + 
-        ggplot2::theme(strip.text.x = ggplot2::element_text(size=9, color="black"), 
-                       axis.text.x = ggplot2::element_text(angle = 45, hjust=1, vjust = 1))
-      # if(nrow(corr) < 20){ # if user wants to fill cell values
-      #   p <- p + ggplot2::geom_text(ggplot2::aes(label = round(Freq,2) ), color = "black", size = 4)
-      # }
-      # Basic histogram
-      mydata4$Group <- ifelse(mydata4$Freq < 0, "Low", ifelse(mydata4$Freq < 0.2, "Medium", "High"))
-      group.colors <- c(Low="#E46726",Medium="white", High="#038542")
-      p2 <- ggplot(mydata4[which(mydata4$Var1 != mydata4$Var2),], aes(x=Freq, fill=Group)) + 
-        geom_histogram() + ggplot2::scale_x_continuous(limits = c(-1,1)) +
-        scale_fill_manual(values=group.colors) + ggplot2::xlab("Value")
-      # combine plots
-      print(htmltools::tagList( plotly::subplot(plotly::ggplotly(p), plotly::ggplotly(p2), nrows=1, shareY = TRUE, shareX = TRUE ) ) )
-      
-    }else{
-      
-      plotly::renderPlotly({
-        # shiny::renderPlot({
+  # if(nrow(corr) > 1){
+  if("params" %in% ls()){ # we will download the document
+    
+    cat(paste0("###   {.tabset .tabset-pills}    \n\n  "))
+    
+    for(iEnvTrait in envs3){
+      cat("\n\n####", iEnvTrait, "{.tabset .tabset-pills}       \n\n")
+      idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
+      idMta <- idMta[length(idMta)]
+      pred.mta.cor.traits <- result$predictions
+      pred.mta.cor.traits <- pred.mta.cor.traits[pred.mta.cor.traits$analysisId == idMta,]
+      pred.mta.cor.traits <- subset(pred.mta.cor.traits, select = c(trait,designation,environment,predictedValue))
+      predictions.gcorrT <- pred.mta.cor.traits[which(pred.mta.cor.traits$environment == iEnvTrait),]
+      if(nrow(predictions.gcorrT)){
+        wideCorTrait <- stats::reshape(predictions.gcorrT,
+                                       direction = "wide", idvar = "designation",
+                                       timevar = "trait", v.names = "predictedValue", sep= "")
+        colnames(wideCorTrait) <- gsub("predictedValue","",colnames(wideCorTrait))
+        wideCorTrait2 <- as.data.frame(wideCorTrait[,-c(1:2)]); colnames(wideCorTrait2) <- colnames(wideCorTrait)[-c(1:2)]
+        corr <- round(stats::cor(wideCorTrait2, use="pairwise.complete.obs"),2)
         
-        p <- ggplot2::ggplot(data = mydata4, ggplot2::aes(Var2, Var1, fill = Freq))+
+        mydata4CorTraits <- cgiarBase::matToTab(corr)
+        p <- ggplot2::ggplot(data = mydata4CorTraits, ggplot2::aes(Var2, Var1, fill = Freq))+
+          ggplot2::geom_tile(color = "white")+
+          ggplot2::scale_fill_gradient2(low = "#E46726", high = "#038542", mid = "white",
+                                        midpoint = 0, limit = c(-1,1), space = "Lab",
+                                        name="Pearson\nCorrelation") +
+          ggplot2::theme_minimal()+
+          ggplot2::ylab("") + ggplot2::xlab("") +
+          ggplot2::coord_fixed() + 
+          ggplot2::theme(strip.text.x = ggplot2::element_text(size=9, color="black"), 
+                         axis.text.x = ggplot2::element_text(angle = 45, hjust=1, vjust = 1))
+        mydata4CorTraits$Group <- ifelse(mydata4CorTraits$Freq < 0, "Low", ifelse(mydata4CorTraits$Freq < 0.2, "Medium", "High"))
+        group.colors <- c(Low="#E46726",Medium="white", High="#038542")
+        p2 <- ggplot2::ggplot(mydata4CorTraits[which(mydata4CorTraits$Var1 != mydata4CorTraits$Var2),], ggplot2::aes(x=Freq, fill=Group)) + 
+          ggplot2::geom_histogram() + ggplot2::scale_x_continuous(limits = c(-1,1)) +
+          ggplot2::scale_fill_manual(values=group.colors) + ggplot2::xlab("Value")
+        # combine plots
+        print(htmltools::tagList( plotly::subplot(plotly::ggplotly(p), plotly::ggplotly(p2), nrows=1, shareY = TRUE, shareX = TRUE ) ) )
+        
+      }
+      
+    }
+    
+  }else{
+    
+    plotly::renderPlotly({
+      # shiny::renderPlot({
+      idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
+      idMta <- idMta[length(idMta)]
+      pred.mta.cor.traits <- result$predictions
+      pred.mta.cor.traits <- pred.mta.cor.traits[pred.mta.cor.traits$analysisId == idMta,]
+      pred.mta.cor.traits <- subset(pred.mta.cor.traits, select = c(trait,designation,environment,predictedValue))
+      predictions.gcorrT <- pred.mta.cor.traits[which(pred.mta.cor.traits$environment == input$envCovMtaTraits),]
+      if(nrow(predictions.gcorrT)){
+        wideCorTrait <- stats::reshape(predictions.gcorrT,
+                                       direction = "wide", idvar = "designation",
+                                       timevar = "trait", v.names = "predictedValue", sep= "")
+        colnames(wideCorTrait) <- gsub("predictedValue","",colnames(wideCorTrait))
+        wideCorTrait2 <- as.data.frame(wideCorTrait[,-c(1:2)]); colnames(wideCorTrait2) <- colnames(wideCorTrait)[-c(1:2)]
+        corr <- round(stats::cor(wideCorTrait2, use="pairwise.complete.obs"),2)
+        mydata4CorTraits <- cgiarBase::matToTab(corr)
+        
+        p <- ggplot2::ggplot(data = mydata4CorTraits, ggplot2::aes(Var2, Var1, fill = Freq))+
           ggplot2::geom_tile(color = "white")+
           ggplot2::scale_fill_gradient2(low = "#E46726", high = "#038542", mid = "white",
                                         midpoint = 0, limit = c(-1,1), space = "Lab",
@@ -1478,22 +1520,19 @@ if (is.null(result)){
         }
         
         # Basic histogram
-        mydata4$Group <- ifelse(mydata4$Freq < 0, "Low", ifelse(mydata4$Freq < 0.2, "Medium", "High"))
+        mydata4CorTraits$Group <- ifelse(mydata4CorTraits$Freq < 0, "Low", ifelse(mydata4CorTraits$Freq < 0.2, "Medium", "High"))
         group.colors <- c(Low="#E46726",Medium="white", High="#038542")
-        p2 <- ggplot(mydata4[which(mydata4$Var1 != mydata4$Var2),], aes(x=Freq, fill=Group)) + 
-          geom_histogram() + ggplot2::scale_x_continuous(limits = c(-1,1)) +
-          scale_fill_manual(values=group.colors) + ggplot2::xlab("Value")
+        p2 <- ggplot2::ggplot(mydata4CorTraits[which(mydata4CorTraits$Var1 != mydata4CorTraits$Var2),], ggplot2::aes(x=Freq, fill=Group)) + 
+          ggplot2::geom_histogram() + ggplot2::scale_x_continuous(limits = c(-1,1)) +
+          ggplot2::scale_fill_manual(values=group.colors) + ggplot2::xlab("Value")
         # combine plots
         ply1 <- plotly::ggplotly(p)
         ply2 <- plotly::ggplotly(p2)
         plotly::subplot(ply1, ply2, nrows=1, shareY = TRUE, shareX = TRUE)
-        
-        # print(p)
-      })
-      
-    }
-  }else{
-    cat("Only one trait fitted. Skipping correlation plot.")
+      }
+      # print(p)
+    })
+    
   }
   
 }
@@ -1511,7 +1550,7 @@ The following table allows you to inspect the trait predictions in wide format t
 if (is.null(result)){
   # invisible(NULL)
 } else {
-  idMta <- result$status[which(result$status$module == "mta"),"analysisId"]
+  idMta <- result$status[which(result$status$module == "mtaFlex"),"analysisId"]
   idMta <- idMta[length(idMta)]
   pred.mta <- result$predictions
   pred.mta <- pred.mta[pred.mta$analysisId == idMta,]
@@ -1569,7 +1608,9 @@ R Core Team (2021). R: A language and environment for statistical computing. R F
 
 Boer M, van Rossum B (2022). LMMsolver: Linear Mixed Model Solver. R package version 1.0.4.9000.
 
-Covarrubias-Pazaran G. 2016. Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6):1-15.
+Covarrubias-Pazaran G. (2024). lme4breeding: enabling genetic evaluation in the era of genomic data. bioRxiv, 2024-05.
+
+Covarrubias-Pazaran G. (2016). Genome assisted prediction of quantitative traits using the R package sommer. PLoS ONE 11(6):1-15.
 
 <p>&nbsp;</p>
 

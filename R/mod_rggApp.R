@@ -18,8 +18,6 @@ mod_rggApp_ui <- function(id){
                             type = "tabs",
                             tabPanel(div(icon("book"), "Information-RGG") ,
                                      br(),
-                                     # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
-                                     #                     column(width=12,   style = "height:580px; overflow-y: scroll;overflow-x: scroll;",
                                      column(width = 6,
                                             h1(strong(span("Realized Genetic Gain", tags$a(href="https://www.youtube.com/watch?v=5kkS98iJECs&list=PLZ0lafzH_UmclOPifjCntlMzysEB2_2wX&index=10", icon("youtube") , target="_blank"), style="color:darkcyan"))),
                                             h2(strong("Status:")),
@@ -51,8 +49,6 @@ mod_rggApp_ui <- function(id){
                                             p("R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing,
                                 Vienna, Austria. URL https://www.R-project.org/."),
                                      ),
-                                     #                     )
-                                     # )
                             ),
                             tabPanel(div(icon("arrow-right-to-bracket"), "Input"),
                                      tabsetPanel(
@@ -70,14 +66,8 @@ mod_rggApp_ui <- function(id){
                                                        h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
                                                        hr(style = "border-top: 3px solid #4c4c4c;"),
                                                 ),
-                                                # shinydashboard::box(status="success",width = 12, style = "height:460px; overflow-y: scroll;overflow-x: scroll;", solidHeader = TRUE,
-                                                #                     column(width=12,
-                                                # p(span("Network plot of current analyses available.", style="color:black")),
                                                 column(width=12, shiny::plotOutput(ns("plotTimeStamps")) ),
-                                                # p(span("Predictions table.", style="color:black")),
                                                 DT::DTOutput(ns("phenoRgg")),
-                                                #                     )
-                                                # )
                                        ),
                                        tabPanel("Select trait(s)", icon = icon("dice-two"),
                                                 br(),
@@ -87,15 +77,10 @@ mod_rggApp_ui <- function(id){
                                                        h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
                                                        hr(style = "border-top: 3px solid #4c4c4c;"),
                                                 ),
-                                                # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
-                                                #                     column(width=12, style = "height:450px; overflow-y: scroll;overflow-x: scroll;",
-                                                # p(span("View of current analyses available.", style="color:black")),
                                                 tags$span(id = ns('holder1'),
                                                           selectInput(ns("trait3Rgg"), "Trait to visualize regression over years.", choices = NULL, multiple = FALSE),
                                                           plotly::plotlyOutput(ns("plotPredictionsCleanOut")),
                                                 ),
-                                                #                     ),
-                                                # )
                                        ),
                                        tabPanel("Select years & units", icon = icon("dice-three"),
                                                 br(),
@@ -108,13 +93,10 @@ mod_rggApp_ui <- function(id){
                                                        h5(strong(span("The visualizations of the input-data located below will not affect your analysis but may help you pick the right input-parameter values to be specified in the grey boxes above.", style="color:green"))),
                                                        hr(style = "border-top: 3px solid #4c4c4c;"),
                                                 ),
-                                                # column(width=12, style = "height:450px; overflow-y: scroll;overflow-x: scroll;",
-                                                # p(span("View of current analyses available.", style="color:black")),
                                                 tags$span(id = ns('holder2'),
                                                           selectInput(ns("trait3Rgg2"), "Trait to visualize regression over years.", choices = NULL, multiple = FALSE),
                                                           plotly::plotlyOutput(ns("plotPredictionsCleanOut2")),
                                                 ),
-                                                # ),
                                        ),
                                        tabPanel("Run analysis", icon = icon("play"),
                                                 column(width=12,style = "background-color:grey; color: #FFFFFF",
@@ -129,6 +111,7 @@ mod_rggApp_ui <- function(id){
                                                                      shinydashboard::box(width = 12, status = "success", background="green",solidHeader=TRUE,collapsible = TRUE, collapsed = TRUE, title = "Additional run settings...",
                                                                                          tags$span(id = ns('mackayOptions'),
                                                                                                    numericInput(ns("deregressWeight"), label = "Deregression weight", value = 1),
+                                                                                                   numericInput(ns("propTopIndsPerYear"), label = "Top proportion individuals to keep per year of origin", value = 1, min = 0.1, max = 1, step = 0.1),
                                                                                                    selectInput(ns("partition"), "Partitioned regression", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE),
                                                                                          ),
                                                                                          tags$span(id = ns('piephoOptions'),
@@ -136,7 +119,8 @@ mod_rggApp_ui <- function(id){
                                                                                                    numericInput(ns("bootstrappingN"), label = "Number of bootstrapping per samples", value = 10),
                                                                                          ),
                                                                                          selectInput(ns("deregress"), "Should deregress estimates", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE),
-                                                                                         selectInput(ns("verbose"), label = "Print logs?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE)
+                                                                                         selectInput(ns("verbose"), label = "Print logs?", choices = list(TRUE,FALSE), selected = FALSE, multiple=FALSE),
+                                                                                         selectInput(ns("forceRules"), label = "#Years rule applied?", choices = list(TRUE,FALSE), selected = TRUE, multiple=FALSE)
                                                                      ),
                                                               ),
                                                        ),
@@ -150,19 +134,11 @@ mod_rggApp_ui <- function(id){
                                      tabsetPanel(
                                        tabPanel("Metrics", icon = icon("table"),
                                                 br(),
-                                                # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
-                                                #                     column(width=12,br(),
                                                 DT::DTOutput(ns("metricsRgg")),
-                                                #                            style = "height:530px; overflow-y: scroll;overflow-x: scroll;"),
-                                                # )
                                        ),
                                        tabPanel("Modeling", icon = icon("table"),
                                                 br(),
-                                                # shinydashboard::box(status="success",width = 12, solidHeader = TRUE,
-                                                #                     column(width=12,
                                                 DT::DTOutput(ns("modelingRgg")),
-                                                #                            style = "height:530px; overflow-y: scroll;overflow-x: scroll;"),
-                                                # )
                                        ),
                                        tabPanel("Dashboard", icon = icon("file-image"),
                                                 br(),
@@ -326,7 +302,7 @@ mod_rggApp_server <- function(id, data){
     ##############################################################################################
     ##############################################################################################
     ##############################################################################################
-    ## render trait distribution plot
+    ##  render plots
     observeEvent(c(data(),input$version2Rgg), { # update trait
       req(data())
       req(input$version2Rgg)
@@ -359,10 +335,6 @@ mod_rggApp_server <- function(id, data){
         ggplot2::geom_point() + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, vjust = 1, hjust = 1)) +
         ggplot2::ggtitle("View of current analyses available")
       plotly::ggplotly(res)
-      # res <- plotly::plot_ly(y = mydata[,"predictedValue"], type = "scatter", boxpoints = "all", color = mydata[,"entryType"],
-      #                        x = mydata[,"yearOfOrigin"], text=mydata[,"designation"], pointpos = -1.8)
-      # res = res %>% plotly::layout(showlegend = TRUE,  xaxis = list(titlefont = list(size = input$fontSize), tickfont = list(size = input$fontSize)))
-      # res
     })
     output$plotPredictionsCleanOut2 <- plotly::renderPlotly({ # update plot
       req(data())
@@ -389,11 +361,6 @@ mod_rggApp_server <- function(id, data){
         ggplot2::geom_point() + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, vjust = 1, hjust = 1)) +
         ggplot2::ggtitle("View of current analyses available")
       plotly::ggplotly(res)
-
-      # res <- plotly::plot_ly(y = mydata[,"predictedValue"], type = "scatter", boxpoints = "all", color = mydata[,"entryType"],
-      #                        x = mydata[,"yearOfOrigin"], text=mydata[,"designation"], pointpos = -1.8)
-      # res = res %>% plotly::layout(showlegend = TRUE,  xaxis = list(titlefont = list(size = input$fontSize), tickfont = list(size = input$fontSize)))
-      # res
     })
     ## render timestamps flow
     output$plotTimeStamps <- shiny::renderPlot({
@@ -456,23 +423,71 @@ mod_rggApp_server <- function(id, data){
                                     )
       ), numeric.output)
     })
+    ##############################################################################################
+    ##############################################################################################
+    ##############################################################################################
+    ##  actual run
     ## render result of "run" button click
-    outRgg <- eventReactive(input$runRgg, {
+
+    my_rgg <- ExtendedTask$new(function(input, data) {
+      promises::future_promise({
+        # some long process
+        if(input$methodRgg == "piepho"){
+          result <- try(cgiarPipeline::rggPiepho(
+            phenoDTfile= data,
+            analysisId=input$version2Rgg,
+            trait=input$trait2Rgg, # per trait
+            deregress=input$deregress,
+            yearsToUse=input$yearsToUse,
+            sampleN = input$sampleN,
+            bootstrappingN = input$bootstrappingN,
+            verbose=input$verbose,
+            forceRules = input$forceRules
+          ),
+          silent=TRUE
+          )
+        }else if(input$methodRgg == "mackay"){
+          result <- try(cgiarPipeline::rggMackay(
+            phenoDTfile= data,
+            analysisId=input$version2Rgg,
+            trait=input$trait2Rgg, # per trait
+            deregressWeight=input$deregressWeight,
+            deregress=input$deregress,
+            partition=input$partition,
+            yearsToUse=input$yearsToUse,
+            verbose=input$verbose,
+            forceRules = input$forceRules,
+            propTopIndsPerYear = input$propTopIndsPerYear
+          ),
+          silent=TRUE
+          )
+        }
+        return(result)
+      })
+    })
+
+    observeEvent(input$runRgg, {
       req(data())
       req(input$methodRgg)
       req(input$version2Rgg)
       req(input$trait2Rgg)
       req(input$yearsToUse)
       shinybusy::show_modal_spinner('fading-circle', text = 'Processing...')
-      dtRgg <- data()
 
+      ui_inputs <- shiny::reactiveValuesToList(input)
+      data_obj  <- data()
+
+      my_rgg$invoke(ui_inputs, data_obj)
+    })
+
+    output$outRgg <- renderPrint({
       # run the modeling, but before test if mta was done
-      if(sum(dtRgg$status$module %in% c("mta","indexD")) == 0) {
+      if(sum(data()$status$module %in% c("mta","indexD")) == 0) {
         output$qaQcRggInfo <- renderUI({
           if (hideAll$clearAll){
             return()
           }else{
-            req(dtRgg)
+            req(data())
             HTML(as.character(div(style="color: brown;",
                                   "Please perform Multi-Trial-Analysis or Selection Index before conducting Optimal Cross Selection."))
             )
@@ -480,124 +495,78 @@ mod_rggApp_server <- function(id, data){
         })
       }else{
         output$qaQcRggInfo <- renderUI({return(NULL)})
-        if(input$methodRgg == "piepho"){
-          result <- try(cgiarPipeline::rggPiepho(
-            phenoDTfile= dtRgg,
-            analysisId=input$version2Rgg,
-            trait=input$trait2Rgg, # per trait
-            deregress=input$deregress,
-            yearsToUse=input$yearsToUse,
-            sampleN = input$sampleN,
-            bootstrappingN = input$bootstrappingN,
-            verbose=input$verbose
-          ),
-          silent=TRUE
-          )
-        }else if(input$methodRgg == "mackay"){
-          result <- try(cgiarPipeline::rggMackay(
-            phenoDTfile= dtRgg,
-            analysisId=input$version2Rgg,
-            trait=input$trait2Rgg, # per trait
-            deregressWeight=input$deregressWeight,
-            deregress=input$deregress,
-            partition=input$partition,
-            yearsToUse=input$yearsToUse,
-            verbose=input$verbose
-          ),
-          silent=TRUE
-          )
-        }
+        result <- my_rgg$result()
+        shinybusy::remove_modal_spinner()
         if(!inherits(result,"try-error")) {
           data(result) # update data with results
           # save(result, file = "./R/outputs/resultRgg.RData")
           cat(paste("Realized genetic gain step with id:",as.POSIXct( result$status$analysisId[length(result$status$analysisId)], origin="1970-01-01", tz="GMT"),"saved."))
           updateTabsetPanel(session, "tabsMain", selected = "outputTabs")
+
+          # view metrics
+          output$metricsRgg <-  DT::renderDT({
+            metrics <- result$metrics
+            metrics <- metrics[metrics$module=="rgg",]
+            metrics$analysisId <- as.numeric(metrics$analysisId)
+            metrics <- metrics[!is.na(metrics$analysisId),]
+            current.metrics <- metrics[metrics$analysisId==max(metrics$analysisId),]
+            current.metrics <- subset(current.metrics, select = -c(module,analysisId))
+            numeric.output <- c("value", "stdError")
+            DT::formatRound(DT::datatable(current.metrics, extensions = 'Buttons',
+                                          options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                         lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+            ), numeric.output)
+          })
+          # view modeling
+          output$modelingRgg <-  DT::renderDT({
+            modeling <- result$modeling
+            modeling <- modeling[modeling$module=="rgg",]
+            modeling$analysisId <- as.numeric(modeling$analysisId)
+            modeling <- modeling[!is.na(modeling$analysisId),]
+            current.modeling <- modeling[modeling$analysisId==max(modeling$analysisId),]
+            current.modeling <- subset(current.modeling, select = -c(module,analysisId))
+            DT::datatable(current.modeling, extensions = 'Buttons',
+                          options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                         lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
+            )
+          })
+          ## Report tab
+          output$reportRgg <- renderUI({
+            HTML(markdown::markdownToHTML(knitr::knit(system.file("rmd","reportRgg.Rmd",package="bioflow"), quiet = TRUE), fragment.only=TRUE))
+          })
+
+          output$downloadReportRgg <- downloadHandler(
+            filename = function() {
+              paste('my-report', sep = '.', switch(
+                "HTML", PDF = 'pdf', HTML = 'html', Word = 'docx'
+              ))
+            },
+            content = function(file) {
+              src <- normalizePath(system.file("rmd","reportRgg.Rmd",package="bioflow"))
+              src2 <- normalizePath('data/resultRgg.RData')
+              # temporarily switch to the temp dir, in case you do not have write
+              # permission to the current working directory
+              owd <- setwd(tempdir())
+              on.exit(setwd(owd))
+              file.copy(src, 'report.Rmd', overwrite = TRUE)
+              file.copy(src2, 'resultRgg.RData', overwrite = TRUE)
+              out <- rmarkdown::render('report.Rmd', params = list(toDownload=TRUE),switch(
+                "HTML",
+                HTML = rmdformats::robobook(toc_depth = 4)
+                # HTML = rmarkdown::html_document()
+              ))
+              file.rename(out, file)
+            }
+          )
         }else{
           cat(paste("Analysis failed with the following error message: \n\n",result[[1]]))
+          output$predictionsRgg <- DT::renderDT({DT::datatable(NULL)})
+          output$metricsRgg <- DT::renderDT({DT::datatable(NULL)})
+          output$modelingRgg <- DT::renderDT({DT::datatable(NULL)})
         }
+        hideAll$clearAll <- FALSE
+
       }
-      shinybusy::remove_modal_spinner()
-
-      if(!inherits(result,"try-error")) {
-
-        # view metrics
-        output$metricsRgg <-  DT::renderDT({
-          # if ( hideAll$clearAll){
-          #   return()
-          # }else{
-          metrics <- result$metrics
-          metrics <- metrics[metrics$module=="rgg",]
-          metrics$analysisId <- as.numeric(metrics$analysisId)
-          metrics <- metrics[!is.na(metrics$analysisId),]
-          current.metrics <- metrics[metrics$analysisId==max(metrics$analysisId),]
-          current.metrics <- subset(current.metrics, select = -c(module,analysisId))
-          numeric.output <- c("value", "stdError")
-          DT::formatRound(DT::datatable(current.metrics, extensions = 'Buttons',
-                                        options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-                                                       lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
-          ), numeric.output)
-          # }
-        })
-        # view modeling
-        output$modelingRgg <-  DT::renderDT({
-          # if ( hideAll$clearAll){
-          #   return()
-          # }else{
-          modeling <- result$modeling
-          modeling <- modeling[modeling$module=="rgg",]
-          modeling$analysisId <- as.numeric(modeling$analysisId)
-          modeling <- modeling[!is.na(modeling$analysisId),]
-          current.modeling <- modeling[modeling$analysisId==max(modeling$analysisId),]
-          current.modeling <- subset(current.modeling, select = -c(module,analysisId))
-          DT::datatable(current.modeling, extensions = 'Buttons',
-                        options = list(dom = 'Blfrtip',scrollX = TRUE,buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-                                       lengthMenu = list(c(10,20,50,-1), c(10,20,50,'All')))
-          )
-          # }
-        })
-
-        ## Report tab
-        # output$reportRgg <- renderUI({
-        output$reportRgg <- renderUI({
-          HTML(markdown::markdownToHTML(knitr::knit(system.file("rmd","reportRgg.Rmd",package="bioflow"), quiet = TRUE), fragment.only=TRUE))
-        })
-
-        output$downloadReportRgg <- downloadHandler(
-          filename = function() {
-            paste('my-report', sep = '.', switch(
-              "HTML", PDF = 'pdf', HTML = 'html', Word = 'docx'
-            ))
-          },
-          content = function(file) {
-            src <- normalizePath(system.file("rmd","reportRgg.Rmd",package="bioflow"))
-            src2 <- normalizePath('data/resultRgg.RData')
-            # temporarily switch to the temp dir, in case you do not have write
-            # permission to the current working directory
-            owd <- setwd(tempdir())
-            on.exit(setwd(owd))
-            file.copy(src, 'report.Rmd', overwrite = TRUE)
-            file.copy(src2, 'resultRgg.RData', overwrite = TRUE)
-            out <- rmarkdown::render('report.Rmd', params = list(toDownload=TRUE),switch(
-              "HTML",
-              HTML = rmdformats::robobook(toc_depth = 4)
-              # HTML = rmarkdown::html_document()
-            ))
-            file.rename(out, file)
-          }
-        )
-
-      } else {
-        output$predictionsRgg <- DT::renderDT({DT::datatable(NULL)})
-        output$metricsRgg <- DT::renderDT({DT::datatable(NULL)})
-        output$modelingRgg <- DT::renderDT({DT::datatable(NULL)})
-      }
-
-      hideAll$clearAll <- FALSE
-
-    }) ## end eventReactive
-
-    output$outRgg <- renderPrint({
-      outRgg()
     })
 
 
