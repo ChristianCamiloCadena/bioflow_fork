@@ -139,6 +139,7 @@ app_ui <- function(request) {
                  tabPanel(strong("TRANSFORMATIONS"),  mod_sectionInfoTransformApp_ui("sectionInfoTransformApp_1") ),
                  tabPanel(div(icon("arrows-split-up-and-left"), "(optional) Trait Transformations (", icon("seedling"), ")" ),  mod_traitTransformApp_ui("traitTransformApp_1") ),
                  tabPanel(div(icon("arrows-split-up-and-left"), "(optional) Single-Cross Markers (", icon("dna"), ")" ), mod_singleCrossGenoApp_ui("singleCrossGenoApp_1")  ),
+                 tabPanel(div(icon("arrows-split-up-and-left"), "(optional) DataWeather-Tranformation (", icon("cloud-sun-rain"), ")" ), mod_DataWeather_descriptive_ui("mod_DataWeather_descriptive_1")  ),
                  tabPanel(strong("DASHBOARDS")  ),
                  tabPanel("Accelerate (ABI)", mod_abiDashboard_ui("abiDashboard_1"), icon = icon("puzzle-piece") ),
                  tabPanel("Analytical Modules", mod_reportBuilder_ui("reportBuilder_1") , icon = icon("file") ),
@@ -147,6 +148,8 @@ app_ui <- function(request) {
     )
   )
 }
+
+?icon
 
 #' Add external Resources to the Application
 #'

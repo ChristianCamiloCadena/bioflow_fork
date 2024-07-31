@@ -19,8 +19,6 @@
 # attachment::att_amend_desc()
 #
 #
-<<<<<<< HEAD
-#<<<<<<< HEAD
 ###################################
 #### CURRENT FILE: DEV SCRIPT #####
 ###################################
@@ -29,7 +27,7 @@
 
 ## Dependencies ----
 ## Amend DESCRIPTION with dependencies read from package code parsing
-## install.packages('attachment') # if needed.
+install.packages('attachment') # if needed.
 attachment::att_amend_desc()
 
 
@@ -60,6 +58,9 @@ usethis::use_package("shinybusy")
 usethis::use_package("markdown")
 usethis::use_package("kableExtra")
 usethis::use_package("ggplot2")
+usethis::use_package("rstatix")
+usethis::use_package("ggcorrplot")
+usethis::use_package("shinyjs")
 # usethis::use_package("tidyverse")
 usethis::use_pipe()
 usethis::use_dev_package("cgiarBase", type = "Imports", remote = "Breeding-Analytics/cgiarBase")
