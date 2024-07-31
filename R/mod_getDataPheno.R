@@ -55,7 +55,7 @@ mod_getDataPheno_ui <- function(id){
                                                                          textInput(
                                                                            inputId = ns('pheno_db_url'),
                                                                            label = 'Server URL:',
-                                                                           placeholder = 'https://cb-qa.ebsproject.org'
+                                                                           placeholder = 'https://cb-wee.ebsproject.org'
                                                                          ),
                                                                          actionButton(
                                                                            inputId = ns('pheno_db_save'),
@@ -230,7 +230,6 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
-
     # warning message
     output$warningMessage <- renderUI(
       if(is.null(data())){
@@ -293,14 +292,9 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
         golem::invoke_js('showid', ns('auth_server_holder'))
         golem::invoke_js('hideid', ns('data_server_holder'))
+        golem::invoke_js('hideid', ns('pheno_db_token_holder'))
 
         if (input$pheno_db_type == 'ebs') {
-          is_local <- Sys.getenv('SHINY_PORT') == ""
-          if (is_local == TRUE) {
-            golem::invoke_js('hideid', ns('pheno_db_token_holder'))
-          } else {
-            golem::invoke_js('showid', ns('pheno_db_token_holder'))
-          }
           golem::invoke_js('hideid', ns('pheno_db_user_holder'))
           golem::invoke_js('hideid', ns('pheno_db_password_holder'))
           golem::invoke_js('hideid', ns('pheno_db_crop_holder'))
@@ -308,7 +302,6 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
           QBMS::set_qbms_config(url = input$pheno_db_url, engine = 'ebs', brapi_ver = 'v2')
         } else if (input$pheno_db_type == 'bms') {
-          golem::invoke_js('hideid', ns('pheno_db_token_holder'))
           golem::invoke_js('showid', ns('pheno_db_user_holder'))
           golem::invoke_js('showid', ns('pheno_db_password_holder'))
           golem::invoke_js('showid', ns('pheno_db_crop_holder'))
@@ -316,7 +309,6 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
           QBMS::set_qbms_config(url = input$pheno_db_url, engine = 'bms', brapi_ver = 'v1')
         } else if (input$pheno_db_type == 'breedbase') {
-          golem::invoke_js('hideid', ns('pheno_db_token_holder'))
           golem::invoke_js('hideid', ns('pheno_db_user_holder'))
           golem::invoke_js('hideid', ns('pheno_db_password_holder'))
           golem::invoke_js('hideid', ns('pheno_db_crop_holder'))
@@ -342,35 +334,89 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
               # EBS QA instance (https://cb-qa.ebsproject.org)
               if (ebs_domain == 'ebsproject.org' & ebs_instance == 'cb-qa') {
-                ebs_brapi <- sub('(.+)//cb-qa\\.(.+)', '\\1//cbbrapi-qa.\\2', input$pheno_db_url)
-                QBMS::set_qbms_config(url = ebs_brapi, engine = 'ebs', brapi_ver = 'v2')
-                QBMS::login_oauth2(authorize_url = 'https://auth-dev.ebsproject.org/oauth2/authorize',
-                                   access_url    = 'https://auth-dev.ebsproject.org/oauth2/token',
-                                   client_id     = '5crahiqorgj0lppt3n9dkulkst',
-                                   client_secret = '1sf4tipbp4arj3d5cncjmrvk9c2cu30gor5618hnh8rgkp6v5fs')
+                ebs_brapi         <- sub('(.+)//cb-qa\\.(.+)', '\\1//cbbrapi-qa.\\2', input$pheno_db_url)
+                ebs_authorize_url <- 'https://auth-dev.ebsproject.org/oauth2/authorize'
+                ebs_access_url    <- 'https://auth-dev.ebsproject.org/oauth2/token'
+                ebs_client_id     <- '5crahiqorgj0lppt3n9dkulkst'
+                ebs_client_secret <- '1sf4tipbp4arj3d5cncjmrvk9c2cu30gor5618hnh8rgkp6v5fs'
 
                 # IRRI production instance (https://prod-cb.ebs.irri.org/)
               } else if (ebs_domain == 'ebs.irri.org') {
                 ebs_brapi <- sub('(.+)//prod-cb\\.(.+)', '\\1//prod-cbbrapi.\\2', input$pheno_db_url)
-                QBMS::set_qbms_config(url = ebs_brapi, engine = 'ebs', brapi_ver = 'v2')
-                QBMS::login_oauth2(authorize_url = 'https://auth.ebsproject.org/oauth2/authorize',
-                                   access_url    = 'https://auth.ebsproject.org/oauth2/token',
-                                   client_id     = '7s4mb2tu4884679rmbucsuopk1',
-                                   client_secret = 'nf4m8qobpj8eplpg0a9bbo63g69vh0r3p8rbovtfb0udd28rnk9')
+                ebs_authorize_url <- 'https://auth.ebsproject.org/oauth2/authorize'
+                ebs_access_url    <- 'https://auth.ebsproject.org/oauth2/token'
+                ebs_client_id     <- '7s4mb2tu4884679rmbucsuopk1'
+                ebs_client_secret <- 'nf4m8qobpj8eplpg0a9bbo63g69vh0r3p8rbovtfb0udd28rnk9'
 
                 # CIMMYT instances (https://cb-maize.ebs.cimmyt.org, https://cb-staging.ebs.cimmyt.org/)
                 # or evaluation instances (https://cb-mee.ebsproject.org, https://cb-ree.ebsproject.org, and https://cb-wee.ebsproject.org)
               } else if (ebs_domain == 'ebs.cimmyt.org' || ebs_instance %in% c('cb-mee', 'cb-ree', 'cb-wee')) {
                 ebs_brapi <- sub('(.+)//cb-(.+)', '\\1//cbbrapi-\\2', input$pheno_db_url)
-                QBMS::set_qbms_config(url = ebs_brapi, engine = 'ebs', brapi_ver = 'v2')
-                QBMS::login_oauth2(authorize_url = 'https://auth.ebsproject.org/oauth2/authorize',
-                                   access_url    = 'https://auth.ebsproject.org/oauth2/token',
-                                   client_id     = '346lau0avcptntd1ksbmgdi5c',
-                                   client_secret = 'q5vnvakfj800ibh5tvqut73vj8klv1tpt6ugtmuneh6d2jb28i3')
+                ebs_authorize_url <- 'https://auth.ebsproject.org/oauth2/authorize'
+                ebs_access_url    <- 'https://auth.ebsproject.org/oauth2/token'
+                ebs_client_id     <- '346lau0avcptntd1ksbmgdi5c'
+                ebs_client_secret <- 'q5vnvakfj800ibh5tvqut73vj8klv1tpt6ugtmuneh6d2jb28i3'
               } else {
                 shinyWidgets::show_alert(title = 'Oops!', type = 'warning', "We can't recognize this EBS instance :-(")
                 return()
               }
+
+              is_local <- Sys.getenv('SHINY_PORT') == ""
+
+              if (is_local == TRUE) {
+                QBMS::set_qbms_config(url = ebs_brapi, engine = 'ebs', brapi_ver = 'v2')
+                QBMS::login_oauth2(authorize_url = ebs_authorize_url,
+                                   access_url    = ebs_access_url,
+                                   client_id     = ebs_client_id,
+                                   client_secret = ebs_client_secret)
+              } else {
+                golem::invoke_js('showid', ns('pheno_db_token_holder'))
+
+                # golem::invoke_js("getCookie")
+                shiny_app_uri <- paste0(session$clientData$url_protocol, '//',
+                                        session$clientData$url_hostname,
+                                        session$clientData$url_pathname)
+
+                ebs_redirect_uri <- paste0(shiny_app_uri, 'www/callback/')
+
+                EBS_client <- httr2::oauth_client(
+                  id        = ebs_client_id,
+                  secret    = ebs_client_secret,
+                  token_url = ebs_access_url,
+                  name      = "EBS"
+                )
+
+                if (input$pheno_token_user == "") {
+                  ebs_oauth_state <- httr2:::base64_url_rand()
+
+                  # set_cookie(session, "ebs_oauth_state", ebs_oauth_state)
+
+                  ebs_auth_url <- httr2::oauth_flow_auth_code_url(
+                    client       = EBS_client,
+                    auth_url     = ebs_authorize_url,
+                    redirect_uri = ebs_redirect_uri,
+                    state        = ebs_oauth_state
+                  )
+
+                  session$sendCustomMessage("popup", paste0(shiny_app_uri,
+                                                            '?redirect=',
+                                                            jsonlite::base64_enc(ebs_auth_url)))
+                  return()
+                } else {
+                  # ebs_token <- sub(".*ebs_token=([^;]*).*", "\\1", input$cookies)
+                  ebs_token <- input$pheno_token_user
+                  payload <- jsonlite::base64_dec(ebs_token) |> rawToChar() |> jsonlite::fromJSON()
+                  token <- httr2:::oauth_client_get_token(client = EBS_client,
+                                                          grant_type = "authorization_code",
+                                                          code = payload$code,
+                                                          state = payload$state,
+                                                          redirect_uri = redirect_uri)
+
+                  QBMS::set_qbms_config(url = ebs_brapi, engine = 'ebs', brapi_ver = 'v2')
+                  QBMS::set_token(token$id_token)
+                }
+              }
+
             } else if (input$pheno_db_type == 'bms') {
               QBMS::login_bms(input$pheno_db_user, input$pheno_db_password)
             } else if (input$pheno_db_type == 'breedbase') {
@@ -396,7 +442,7 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
             } else {
               shinybusy::show_modal_spinner('fading-circle', text = 'Loading Programs...')
 
-              pheno_db_programs <- QBMS::list_programs()
+              pheno_db_programs <- QBMS::list_programs()$programName
 
               updateSelectizeInput(session,
                                    inputId = 'pheno_db_program',
@@ -423,7 +469,7 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
         QBMS::set_crop(input$pheno_db_crop)
 
-        pheno_db_programs <- QBMS::list_programs()
+        pheno_db_programs <- QBMS::list_programs()$programName
 
         updateSelectizeInput(session,
                              inputId = 'pheno_db_program',
@@ -445,7 +491,7 @@ mod_getDataPheno_server <- function(id, map = NULL, data = NULL, res_auth=NULL){
 
         QBMS::set_program(input$pheno_db_program)
 
-        pheno_db_trials <- QBMS::list_trials()
+        pheno_db_trials <- QBMS::list_trials()$trialName
 
         if (input$pheno_db_type == 'breedbase') {
           output$pheno_db_folder <- renderUI({

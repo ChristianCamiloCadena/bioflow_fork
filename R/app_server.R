@@ -67,7 +67,7 @@ app_server <- function(input, output, session) {
                         "country", "location", "trial","study", "management","rep", "iBlock",
                         "row", "col", "designation", "gid", "entryType", "trait")
 
-  equired_mapping_weather <- c("environment", "latitude","longitude",
+  required_mapping_weather <- c("environment", "latitude","longitude",
                                "year", "month","day","date", "trait")
 
   ## HOME
@@ -84,10 +84,10 @@ app_server <- function(input, output, session) {
     observeEvent(input$login, {
       shinybusy::show_modal_spinner()
 
-      local_server <- Sys.getenv("SHINY_PORT") == ""
+      is_local <- Sys.getenv("SHINY_PORT") == ""
 
       # NOTE: check if we run it on localhost!
-      if (local_server) {
+      if (is_local) {
         client_id     <- "shiny_local"
         redirect_uri  <- "http://localhost:1410"
       } else {
@@ -131,10 +131,10 @@ app_server <- function(input, output, session) {
       if (!is.null(query$code) && !is.null(query$state)) {
         shinybusy::show_modal_spinner()
 
-        local_server <- Sys.getenv("SHINY_PORT") == ""
+        is_local <- Sys.getenv("SHINY_PORT") == ""
 
         # NOTE: check if we run it on localhost!
-        if (local_server) {
+        if (is_local) {
           client_id     <- "shiny_local"
           redirect_uri  <- "http://localhost:1410"
         } else {
@@ -270,5 +270,9 @@ app_server <- function(input, output, session) {
   mod_sectionInfoTransformApp_server("sectionInfoTransformApp_1") # info for data transformations
   mod_sectionInfoGEApp_server("sectionInfoGEApp_1") # info for genetic evaluation
   mod_sectionInfoSHApp_server("sectionInfoSHApp_1") # info for selection history
+
+  ## agronomic evaluation
+  mod_sectionInfoAEApp_server("sectionInfoAEApp_1")
+  mod_agrAnova_server("agrAnova_1") #anova
 
 }

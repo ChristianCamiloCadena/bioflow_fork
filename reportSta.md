@@ -33,12 +33,13 @@ The objective of this dashboard is to help scientist to understand the following
 Understanding these data features should allow the scientist to identify trait by environments combinations that have enough genetic signal and take the decision of which to include in the multi-trial analysis. It should also allow the scientist to assess the quality of the trials conducted and take corrective measures (e.g., change service providers, improve practices, etc.).  
 
 
-### Map of trials planted
-
-The following map allows you to assess the location where trials are planted.
 
 
+<<<<<<< HEAD
 <!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-outa3493db8cf0be1ce" style="width:100%;height:400px;"></div><!--/html_preserve-->
+=======
+No coordinates available. Skipping planting map.
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 
 ### Entries and traits by environment table
 
@@ -50,16 +51,22 @@ The following table allows to see how many locations had data for the different 
  <thead>
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> environment </th>
+<<<<<<< HEAD
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Yield_Mg_ha </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Ear_Height_cm </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> Plant_Height_cm </th>
+=======
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> YLD_CONT_TON </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> FLW50 </th>
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> Number of entries </th>
   </tr>
  </thead>
 <tbody>
   <tr>
-   <td style="text-align:left;"> 2021_NYH3 </td>
+   <td style="text-align:left;"> 2024DS TMeLS-I EST007 S1 IRRHQ </td>
    <td style="text-align:left;"> ✅ </td>
+<<<<<<< HEAD
    <td style="text-align:left;"> ✅ </td>
    <td style="text-align:left;"> ✅ </td>
    <td style="text-align:right;"> 384 </td>
@@ -91,6 +98,10 @@ The following table allows to see how many locations had data for the different 
    <td style="text-align:left;"> ✅ </td>
    <td style="text-align:left;"> ✅ </td>
    <td style="text-align:right;"> 249 </td>
+=======
+   <td style="text-align:left;"> ✅ </td>
+   <td style="text-align:right;"> 380 </td>
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
   </tr>
 </tbody>
 </table></div>
@@ -106,24 +117,43 @@ The following table allows you to verify some quality metrics (KPIs) for the dif
 <!--html_preserve--><div class="form-group shiny-input-container">
 <label class="control-label" id="staApp_1-traitSta-label" for="staApp_1-traitSta">Trait to filter:</label>
 <div>
+<<<<<<< HEAD
 <select id="staApp_1-traitSta" class="shiny-input-select"><option value="Yield_Mg_ha" selected>Yield_Mg_ha</option>
 <option value="Plant_Height_cm">Plant_Height_cm</option>
 <option value="Ear_Height_cm">Ear_Height_cm</option></select>
+=======
+<select id="staApp_1-traitSta" class="shiny-input-select"><option value="YLD_CONT_TON" selected>YLD_CONT_TON</option>
+<option value="FLW50">FLW50</option></select>
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 <script type="application/json" data-for="staApp_1-traitSta" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div><!--/html_preserve-->
 
+<<<<<<< HEAD
 <!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="staApp_1-out4540b22c888f96c3" style="width:100%;height:auto;"></div><!--/html_preserve-->
+=======
+<!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="staApp_1-out110922bcfa48d530" style="width:100%;height:auto;"></div><!--/html_preserve-->
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 
 <p>&nbsp;</p>
 
+### Field view
+
+The following heatmaps allow you to inspect the spatial trends in the different fields to take corrective measures in the next season and understand why some variance components may look the way they look.
 
 
 <p>&nbsp;</p>
 
+<!--html_preserve--><div class="form-group shiny-input-container">
+<label class="control-label" id="staApp_1-traitStaFieldView-label" for="staApp_1-traitStaFieldView">Trait to filter:</label>
+<div>
+<select id="staApp_1-traitStaFieldView" class="shiny-input-select"><option value="YLD_CONT_TON" selected>YLD_CONT_TON</option>
+<option value="FLW50">FLW50</option></select>
+<script type="application/json" data-for="staApp_1-traitStaFieldView" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
+</div>
+</div><!--/html_preserve-->
 
-
-
+<!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-out695e383ae334e750" style="width:100%;height:400px;"></div><!--/html_preserve-->
 
 ### Output parameters 
 
@@ -136,14 +166,23 @@ This barplot allows you to see the variance components values and ratios for the
 <!--html_preserve--><div class="form-group shiny-input-container">
 <label class="control-label" id="staApp_1-traitSta0-label" for="staApp_1-traitSta0">Trait to filter:</label>
 <div>
+<<<<<<< HEAD
 <select id="staApp_1-traitSta0" class="shiny-input-select"><option value="Yield_Mg_ha" selected>Yield_Mg_ha</option>
 <option value="Plant_Height_cm">Plant_Height_cm</option>
 <option value="Ear_Height_cm">Ear_Height_cm</option></select>
+=======
+<select id="staApp_1-traitSta0" class="shiny-input-select"><option value="YLD_CONT_TON" selected>YLD_CONT_TON</option>
+<option value="FLW50">FLW50</option></select>
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 <script type="application/json" data-for="staApp_1-traitSta0" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div><!--/html_preserve-->
 
+<<<<<<< HEAD
 <!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-out04fd40c08239de30" style="width:100%;height:400px;"></div><!--/html_preserve-->
+=======
+<!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-outeeb360a55aad2b17" style="width:100%;height:400px;"></div><!--/html_preserve-->
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 
 <p>&nbsp;</p>
 
@@ -154,8 +193,10 @@ This barplot allows you to see the variance components values and ratios for the
 <option value="CV" selected>CV</option>
 <option value="r2" selected>r2</option>
 <option value="V_designation" selected>V_designation</option>
+<option value="V_rowF" selected>V_rowF</option>
+<option value="V_colF" selected>V_colF</option>
 <option value="V_repF" selected>V_repF</option>
-<option value="V_iBlockF" selected>V_iBlockF</option>
+<option value="V_s(row, col)" selected>V_s(row, col)</option>
 <option value="V_residual" selected>V_residual</option>
 <option value="mean" selected>mean</option></select>
 <script type="application/json" data-for="staApp_1-parameterMetrics" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
@@ -167,7 +208,11 @@ The following barplot is designed to provide a high-level view of estimated para
 
 <p>&nbsp;</p>
 
+<<<<<<< HEAD
 <!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-outfa4bc8442eb201e8" style="width:100%;height:400px;"></div><!--/html_preserve-->
+=======
+<!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-out9c278bef184b455e" style="width:100%;height:400px;"></div><!--/html_preserve-->
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 
 ### Predictions
 
@@ -180,16 +225,16 @@ The following table allows you to check the trait by environment adjusted means 
 <!--html_preserve--><div class="form-group shiny-input-container">
 <label class="control-label" id="staApp_1-envSta-label" for="staApp_1-envSta">Environment to filter:</label>
 <div>
-<select id="staApp_1-envSta" class="shiny-input-select"><option value="2021_NYH3" selected>2021_NYH3</option>
-<option value="2021_SCH1">2021_SCH1</option>
-<option value="2021_TXH2">2021_TXH2</option>
-<option value="2021_TXH1">2021_TXH1</option>
-<option value="2021_NYS1">2021_NYS1</option></select>
+<select id="staApp_1-envSta" class="shiny-input-select"><option value="2024DS TMeLS-I EST007 S1 IRRHQ" selected>2024DS TMeLS-I EST007 S1 IRRHQ</option></select>
 <script type="application/json" data-for="staApp_1-envSta" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div><!--/html_preserve-->
 
+<<<<<<< HEAD
 <!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="staApp_1-outb4125ac9ef025568" style="width:100%;height:auto;"></div><!--/html_preserve-->
+=======
+<!--html_preserve--><div class="datatables html-widget html-widget-output shiny-report-size html-fill-item" id="staApp_1-outf67d564856deef5a" style="width:100%;height:auto;"></div><!--/html_preserve-->
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 
 <p>&nbsp;</p>
 
@@ -200,14 +245,23 @@ The following boxplot allows you to see the distribution of predicted values by 
 <!--html_preserve--><div class="form-group shiny-input-container">
 <label class="control-label" id="staApp_1-traitStaBox-label" for="staApp_1-traitStaBox">Trait to filter:</label>
 <div>
+<<<<<<< HEAD
 <select id="staApp_1-traitStaBox" class="shiny-input-select"><option value="Yield_Mg_ha" selected>Yield_Mg_ha</option>
 <option value="Plant_Height_cm" selected>Plant_Height_cm</option>
 <option value="Ear_Height_cm" selected>Ear_Height_cm</option></select>
+=======
+<select id="staApp_1-traitStaBox" class="shiny-input-select"><option value="YLD_CONT_TON" selected>YLD_CONT_TON</option>
+<option value="FLW50" selected>FLW50</option></select>
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 <script type="application/json" data-for="staApp_1-traitStaBox" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div><!--/html_preserve-->
 
+<<<<<<< HEAD
 <!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-outf4c2f759a1338bf6" style="width:100%;height:400px;"></div><!--/html_preserve-->
+=======
+<!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-out665debc9733cd48d" style="width:100%;height:400px;"></div><!--/html_preserve-->
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 
 <p>&nbsp;</p>
 
@@ -218,14 +272,23 @@ In the following plot you can observe the comparison between the top 30 entries 
 <!--html_preserve--><div class="form-group shiny-input-container">
 <label class="control-label" id="staApp_1-traitStaComp-label" for="staApp_1-traitStaComp">Trait to filter:</label>
 <div>
+<<<<<<< HEAD
 <select id="staApp_1-traitStaComp" class="shiny-input-select"><option value="Yield_Mg_ha" selected>Yield_Mg_ha</option>
 <option value="Plant_Height_cm" selected>Plant_Height_cm</option>
 <option value="Ear_Height_cm" selected>Ear_Height_cm</option></select>
+=======
+<select id="staApp_1-traitStaComp" class="shiny-input-select"><option value="YLD_CONT_TON" selected>YLD_CONT_TON</option>
+<option value="FLW50" selected>FLW50</option></select>
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 <script type="application/json" data-for="staApp_1-traitStaComp" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div><!--/html_preserve-->
 
+<<<<<<< HEAD
 <!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-out730762fe4fcf5e08" style="width:100%;height:400px;"></div><!--/html_preserve-->
+=======
+<!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-outa5a8e0bb86ac9b1c" style="width:100%;height:400px;"></div><!--/html_preserve-->
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 
 
 ### Correlation between environments
@@ -237,14 +300,23 @@ The following plot aims to show the correlation between BLUEs or BLUPs (dependin
 <!--html_preserve--><div class="form-group shiny-input-container">
 <label class="control-label" id="staApp_1-traitStaCor-label" for="staApp_1-traitStaCor">Trait to filter:</label>
 <div>
+<<<<<<< HEAD
 <select id="staApp_1-traitStaCor" class="shiny-input-select"><option value="Yield_Mg_ha" selected>Yield_Mg_ha</option>
 <option value="Plant_Height_cm" selected>Plant_Height_cm</option>
 <option value="Ear_Height_cm" selected>Ear_Height_cm</option></select>
+=======
+<select id="staApp_1-traitStaCor" class="shiny-input-select"><option value="YLD_CONT_TON" selected>YLD_CONT_TON</option>
+<option value="FLW50" selected>FLW50</option></select>
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 <script type="application/json" data-for="staApp_1-traitStaCor" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div><!--/html_preserve-->
 
+<<<<<<< HEAD
 <!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-outf7663e60141bde44" style="width:100%;height:400px;"></div><!--/html_preserve-->
+=======
+<!--html_preserve--><div class="plotly html-widget html-widget-output shiny-report-size shiny-report-theme html-fill-item" id="staApp_1-out1405e97b3f2a0da6" style="width:100%;height:400px;"></div><!--/html_preserve-->
+>>>>>>> b7ae85b6272b700be77b2f3b9a0c1b53d7fb3610
 
 
 ### References of methods used
